@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: dialogflow-webhook
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python webhook.py"
+    plan: free
