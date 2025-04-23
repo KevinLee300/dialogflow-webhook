@@ -29,6 +29,8 @@ def webhook():
     spec_type = parameters.get("spec_type", "")
     category = parameters.get("category", "")
     type_key = parameters.get("type", "")  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
+    if type_key and not category:
+        category = "管支撐"
 
     if category == "管支撐":
         # 檢查是否有 TYPE 的請求
