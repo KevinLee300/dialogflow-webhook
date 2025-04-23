@@ -32,9 +32,9 @@ def webhook():
 
     if category == "管支撐":
         # 檢查是否有 TYPE 的請求
-        if "type" in type_key:
-            if type_key in type_links:
-                reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key]}"
+        if "TYPE" in type_key.upper():  # 將 type_key 轉為大寫進行檢查
+            if type_key.upper() in type_links:  # 同樣將 type_key 轉為大寫匹配 type_links
+                reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key.upper()]}"
             else:
                 reply = "請提供有效的 TYPE（例如 TYPE01 ~ TYPE140）。"
         # 處理 spec_type 的邏輯
