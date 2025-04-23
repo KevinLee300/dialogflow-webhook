@@ -13,6 +13,7 @@ def webhook():
         req = request.get_json()
         query_result = req.get("queryResult", {})
         parameters = query_result.get("parameters", {})
+        print("收到的參數：", parameters)
         output_contexts = query_result.get("outputContexts", [])
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
@@ -51,7 +52,6 @@ def webhook():
     # 回傳 JSON 格式的回應給 Dialogflow
     return jsonify({
         "fulfillmentText": reply,
-        "outputContexts": output_contexts
     })
 
 if __name__ == "__main__":
