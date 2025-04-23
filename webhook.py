@@ -32,7 +32,7 @@ def webhook():
 
     if category == "管支撐":
         # 檢查是否有 TYPE 的請求
-        if "TYPE" in type_key:
+        if "type" in type_key:
             if type_key in type_links:
                 reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key]}"
             else:
