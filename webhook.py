@@ -5,7 +5,7 @@ import openai
 app = Flask(__name__)
 
 # 設置 OpenAI API 密鑰
-openai.api_key = os.getenv("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")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
