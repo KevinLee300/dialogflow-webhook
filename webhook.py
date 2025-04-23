@@ -14,15 +14,12 @@ def webhook():
         query_result = req.get("queryResult", {})
         parameters = query_result.get("parameters", {})
         print("收到的參數：", parameters)
-        output_contexts = query_result.get("outputContexts", [])
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
 
-    # 取得 Dialogflow 傳遞的參數
-    spec_type = parameters.get("spec_type", "")  # 預設為空字串
-    category = parameters.get("category", "")  # 新增 category 參數
+    spec_type = parameters.get("spec_type", "")
+    category = parameters.get("category", "")
 
-    # 根據 spec_type 和 category 的值，產生不同的回覆
     if category == "管支撐":
         if spec_type == "塑化":
             reply = "這是管支撐塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=edJfNW"
@@ -38,7 +35,6 @@ def webhook():
         else:
             reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
     else:
-        # 使用 ChatGPT 生成回覆
         try:
             response = openai.Completion.create(
                 engine="text-davinci-003",
@@ -49,9 +45,8 @@ def webhook():
         except Exception as e:
             reply = "無法生成回應，請稍後再試。"
 
-    # 回傳 JSON 格式的回應給 Dialogflow
     return jsonify({
-        "fulfillmentText": reply,
+        "fulfillmentText": reply
     })
 
 if __name__ == "__main__":
