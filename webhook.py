@@ -25,7 +25,7 @@ def webhook():
         print("收到的參數：", parameters)
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
-
+    session = req.get("session", "") 
     spec_type = parameters.get("spec_type", "")
     category = parameters.get("category", "")
     type_key = parameters.get("TYPE", "").upper()  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
@@ -63,8 +63,19 @@ def webhook():
             reply = "無法生成回應，請稍後再試。"
 
     return jsonify({
-        "fulfillmentText": reply
-    })
+    "fulfillmentText": reply,
+    "outputContexts": [
+        {
+            "name": f"{session}/contexts/query-followup",
+            "lifespanCount": 5,
+            "parameters": {
+                "category": category,
+                "spec_type": spec_type,
+                "type": type_key
+            }
+        }
+    ]
+})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
