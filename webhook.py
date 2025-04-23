@@ -2,11 +2,15 @@ from flask import Flask, request, jsonify
 import os
 import openai
 import json
+import logging
 
 app = Flask(__name__)
 
 # 設置 OpenAI API 密鑰
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# 配置日誌
+logging.basicConfig(level=logging.INFO)
 
 # 載入 TYPE 和連結的對應關係
 try:
@@ -22,9 +26,18 @@ def webhook():
         req = request.get_json()
         query_result = req.get("queryResult", {})
         parameters = query_result.get("parameters", {})
-        print("收到的參數：", parameters)
+        logging.info("收到的參數：%s", parameters)
+        for context in query_result.get("outputContexts", []):
+            if "parameters" in context:
+                context_params = context["parameters"]
+                parameters.setdefault("category", context_params.get("category"))
+                parameters.setdefault("spec_type", context_params.get("spec_type"))
+                parameters.setdefault("TYPE", context_params.get("TYPE"))
+
+        logging.info("最終合併後的參數：%s", parameters)
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
+    
     session = req.get("session", "") 
     spec_type = parameters.get("spec_type", "")
     category = parameters.get("category", "")
@@ -71,7 +84,7 @@ def webhook():
             "parameters": {
                 "category": category,
                 "spec_type": spec_type,
-                "type": type_key
+                "TYPE": type_key
             }
         }
     ]
