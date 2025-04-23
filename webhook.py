@@ -29,8 +29,6 @@ def webhook():
     spec_type = parameters.get("spec_type", "")
     category = parameters.get("category", "")
     type_key = parameters.get("type", "")  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
-    if type_key and not category:
-        category = "管支撐"
 
     if category == "管支撐":
         # 檢查是否有 TYPE 的請求
@@ -38,7 +36,7 @@ def webhook():
             if type_key in type_links:
                 reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key]}"
             else:
-                reply = "請提供有效的 TYPE（例如 TYPE01 ~ TYPE120）。"
+                reply = "請提供有效的 TYPE（例如 TYPE01 ~ TYPE140）。"
         # 處理 spec_type 的邏輯
         elif spec_type == "塑化":
             reply = "這是管支撐塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=edJfNW"
