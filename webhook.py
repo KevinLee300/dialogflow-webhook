@@ -36,8 +36,8 @@ def webhook():
     type_key = parameters.get("TYPE", "").upper()  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
     
     if not category:
-            contexts = req.get("queryResult", {}).get("outputContexts", [])
-    for ctx in contexts:
+        contexts = req.get("queryResult", {}).get("outputContexts", [])
+        for ctx in contexts:
             params = ctx.get("parameters", {})
             if "category" in params:
                 category = params["category"]
