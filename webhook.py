@@ -18,12 +18,23 @@ def webhook():
 
     # 取得 Dialogflow 傳遞的參數
     spec_type = parameters.get("spec_type", "")  # 預設為空字串
+    category = parameters.get("category", "")  # 新增 category 參數
 
-    # 根據 spec_type 的值，產生不同的回覆
-    if spec_type == "塑化":
-        reply = "這是塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=AE5ybU"
-    elif spec_type == "企業":
-        reply = "這是企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERaG7Grpi7RLhLySygar-E0BqPzegJZTQK19aBUs01C55g?e=Bk6Cgz"
+    # 根據 spec_type 和 category 的值，產生不同的回覆
+    if category == "管支撐":
+        if spec_type == "塑化":
+            reply = "這是管支撐塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=edJfNW"
+        elif spec_type == "企業":
+            reply = "這是管支撐企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERaG7Grpi7RLhLySygar-E0BqPzegJZTQK19aBUs01C55g?e=c9cAOS"
+        else:
+            reply = "請問是要查詢管支撐的「塑化」還是「企業」規範？"
+    elif category == "油漆":
+        if spec_type == "塑化":
+            reply = "這是油漆塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/EVuPjaS3PC9JkmZFXK9Oh_MBk4zHIYJFQNs2mYOgzqILaQ?e=zDIdfA"
+        elif spec_type == "企業":
+            reply = "這是油漆企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/Eebe8nZcWq9EjuakO8mqU9EBzk53IDJ24jtspI6VDlb5Tg?e=1E9yWu"
+        else:
+            reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
     else:
         # 使用 ChatGPT 生成回覆
         try:
