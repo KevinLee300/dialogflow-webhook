@@ -1,11 +1,20 @@
 from flask import Flask, request, jsonify
 import os
 import openai
+import json
 
 app = Flask(__name__)
 
 # 設置 OpenAI API 密鑰
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# 載入 TYPE 和連結的對應關係
+try:
+    with open("links.json", "r", encoding="utf-8") as f:
+        type_links = json.load(f)
+except UnicodeDecodeError as e:
+    print(f"讀取 links.json 時發生編碼錯誤：{e}")
+    type_links = {}
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -19,9 +28,17 @@ def webhook():
 
     spec_type = parameters.get("spec_type", "")
     category = parameters.get("category", "")
+    type_key = parameters.get("type", "")  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
 
     if category == "管支撐":
-        if spec_type == "塑化":
+        # 檢查是否有 TYPE 的請求
+        if "TYPE" in type_key:
+            if type_key in type_links:
+                reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key]}"
+            else:
+                reply = "請提供有效的 TYPE（例如 TYPE01 ~ TYPE120）。"
+        # 處理 spec_type 的邏輯
+        elif spec_type == "塑化":
             reply = "這是管支撐塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=edJfNW"
         elif spec_type == "企業":
             reply = "這是管支撐企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERaG7Grpi7RLhLySygar-E0BqPzegJZTQK19aBUs01C55g?e=c9cAOS"
@@ -36,12 +53,12 @@ def webhook():
             reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
     else:
         try:
-            response = openai.Completion.create(
+            response56 = openai.Completion.create(
                 engine="text-davinci-003",
                 prompt=f"根據以下參數生成回應：{parameters}",
                 max_tokens=50
             )
-            reply = response.choices[0].text.strip()
+            reply = response56.choices[0].text.strip()
         except Exception as e:
             reply = "無法生成回應，請稍後再試。"
 
