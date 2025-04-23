@@ -25,7 +25,7 @@ def webhook():
         # 使用 ChatGPT 生成回覆
         response = openai.Completion.create(
             engine="text-davinci-003",
-            prompt="根據以下參數生成回應：{parameters}",
+            prompt=f"根據以下參數生成回應：{parameters}",
             max_tokens=50
         )
         reply = response.choices[0].text.strip()
