@@ -50,7 +50,8 @@ def webhook():
 
     # 回傳 JSON 格式的回應給 Dialogflow
     return jsonify({
-        "fulfillmentText": reply
+        "fulfillmentText": reply,
+        "outputContexts": output_contexts
     })
 
 if __name__ == "__main__":
