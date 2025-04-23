@@ -10,7 +10,7 @@ app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # 配置日誌
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
 # 載入 TYPE 和連結的對應關係
 try:
@@ -26,22 +26,23 @@ def webhook():
         req = request.get_json()
         query_result = req.get("queryResult", {})
         parameters = query_result.get("parameters", {})
-        logging.info("收到的參數：%s", parameters)
-        for context in query_result.get("outputContexts", []):
-            if "parameters" in context:
-                context_params = context["parameters"]
-                parameters.setdefault("category", context_params.get("category"))
-                parameters.setdefault("spec_type", context_params.get("spec_type"))
-                parameters.setdefault("TYPE", context_params.get("TYPE"))
+        #logging.info("收到的參數：%s", parameters)
 
-        logging.info("最終合併後的參數：%s", parameters)
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
-    
     session = req.get("session", "") 
-    spec_type = parameters.get("spec_type", "")
     category = parameters.get("category", "")
+    spec_type = parameters.get("spec_type", "")
     type_key = parameters.get("TYPE", "").upper()  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
+    
+    if not category:
+            contexts = req.get("queryResult", {}).get("outputContexts", [])
+    for ctx in contexts:
+            params = ctx.get("parameters", {})
+            if "category" in params:
+                category = params["category"]
+                break
+
 
     if category == "管支撐":
         # 檢查是否有 TYPE 的請求
@@ -84,7 +85,7 @@ def webhook():
             "parameters": {
                 "category": category,
                 "spec_type": spec_type,
-                "TYPE": type_key
+                "type": type_key
             }
         }
     ]
