@@ -13,7 +13,7 @@ def webhook():
         req = request.get_json()
         query_result = req.get("queryResult", {})
         parameters = query_result.get("parameters", {})
-        output_contexts = query_result.get("outputContexts",{})
+        output_contexts = query_result.get("outputContexts", [])
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
 
