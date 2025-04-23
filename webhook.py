@@ -5,15 +5,18 @@ import openai
 app = Flask(__name__)
 
 # 設置 OpenAI API 密鑰
-openai.api_key = 'sk-proj-wvFR6OgGFWPq_DNC5dXYhsk-uWSk2I9e5kRH8LL4P97wjYdyzs6agpybJClc5eblJpIDbruZaeT3BlbkFJbixS6m5q2Z7IrdHb7gtnehiyn2TGbyN4vGyh3L2VoSbMicjPcVIvtoFs56Qes_rlRS4ZkkX8gAY'
+openai.api_key = os.getenv("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")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    req = request.get_json()
+    try:
+        req = request.get_json()
+        query_result = req.get("queryResult", {})
+        parameters = query_result.get("parameters", {})
+    except Exception as e:
+        return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
 
     # 取得 Dialogflow 傳遞的參數
-    query_result = req.get("queryResult", {})
-    parameters = query_result.get("parameters", {})
     spec_type = parameters.get("spec_type", "")  # 預設為空字串
 
     # 根據 spec_type 的值，產生不同的回覆
@@ -23,12 +26,15 @@ def webhook():
         reply = "這是企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERaG7Grpi7RLhLySygar-E0BqPzegJZTQK19aBUs01C55g?e=Bk6Cgz"
     else:
         # 使用 ChatGPT 生成回覆
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=f"根據以下參數生成回應：{parameters}",
-            max_tokens=50
-        )
-        reply = response.choices[0].text.strip()
+        try:
+            response = openai.Completion.create(
+                engine="text-davinci-003",
+                prompt=f"根據以下參數生成回應：{parameters}",
+                max_tokens=50
+            )
+            reply = response.choices[0].text.strip()
+        except Exception as e:
+            reply = "無法生成回應，請稍後再試。"
 
     # 回傳 JSON 格式的回應給 Dialogflow
     return jsonify({
