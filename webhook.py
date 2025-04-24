@@ -54,18 +54,7 @@ def webhook():
 
         # 直接返回 OpenAI 的回應
         return jsonify({
-            "fulfillmentText": reply,
-            "outputContexts": [
-                {
-                    "name": f"{session}/contexts/query-followup",
-                    "lifespanCount": 5,
-                    "parameters": {
-                        "category": parameters.get("category", ""),
-                        "spec_type": parameters.get("spec_type", ""),
-                        "type": parameters.get("TYPE", "")
-                    }
-                }
-            ]
+            "fulfillmentText": reply
         })
 
     # 如果不是 Default Fallback Intent，執行其他邏輯
