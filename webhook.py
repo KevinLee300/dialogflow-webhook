@@ -50,10 +50,15 @@ def webhook():
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "你是一位幫助使用者回答配管設計問題的專家"},
-                    {"role": "user", "content": user_query}
+                    {
+                        "role": "system",
+                        "content": "你是一位擅長配管設計的專家，只用最簡短直接的方式回答問題，請避免多餘解釋。"
+                    },
+                    {"role": "user", "content": "請簡短回答：" + user_query}
                 ],
-                max_tokens=100
+                max_tokens=150,
+                temperature=0.2,
+                top_p=0.8
             )
             reply = response.choices[0].message.content.strip()
         except Exception as e:
