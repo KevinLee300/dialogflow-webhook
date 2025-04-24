@@ -41,7 +41,8 @@ def webhook():
     type_key = parameters.get("TYPE", "").upper()  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
     
     intent = query_result.get("intent", {}).get("displayName", "")
-        
+
+    #logging.info("Intent: %s", intent)       
     if intent == "Default Fallback Intent":
             # 當為 Fallback Intent 時，發送請求給 OpenAI 生成回應
             response = client.chat.completions.create(
@@ -52,7 +53,8 @@ def webhook():
                 ],
                 max_tokens=50
             )
-            reply = response["choices"][0]["message"]["content"].strip()
+            reply = response.choices[0].message.content.strip()
+        
     else:
             reply = "請提供更多信息，我會幫助您。"
 
