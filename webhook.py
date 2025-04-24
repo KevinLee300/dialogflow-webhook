@@ -52,9 +52,11 @@ def webhook():
                 messages=[
                     {
                         "role": "system",
-                        "content": "你是一位擅長配管設計的專家，只用最簡短直接的方式回答問題，請避免多餘解釋。"
+                        "content":  "你是一位專門協助回答『配管設計』問題的專家。"
+                                    "對於不相關的問題（例如腳踏車、電影、食物、天氣等），"
+                                    "請不要回答，並請使用者改問與配管設計相關的問題。"
                     },
-                    {"role": "user", "content": "請簡短回答：" + user_query}
+                    {"role": "user", "content": user_query}
                 ],
                 max_tokens=150,
                 temperature=0.2,
