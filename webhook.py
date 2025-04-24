@@ -44,12 +44,15 @@ def webhook():
         
     if intent == "Default Fallback Intent":
             # 當為 Fallback Intent 時，發送請求給 OpenAI 生成回應
-            response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=f"根據以下參數生成回應：{parameters}",
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",  # 或 "gpt-4"，根據你的需求選擇模型
+                messages=[
+                    {"role": "system", "content": "你是一個有幫助的助手。"},
+                    {"role": "user", "content": f"根據以下參數生成回應：{parameters}"}
+                ],
                 max_tokens=50
             )
-            reply = response.choices[0].text.strip()
+            reply = response["choices"][0]["message"]["content"].strip()
     else:
             reply = "請提供更多信息，我會幫助您。"
 
