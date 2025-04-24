@@ -51,7 +51,7 @@ def webhook():
                 {"role": "system", "content": "你是一位幫助使用者回答配管設計問題的專家"},
                 {"role": "user", "content": f"根據以下參數生成回應：{parameters}"}
             ],
-            max_tokens=50
+            max_tokens=100
         )
         reply = response.choices[0].message.content.strip()
 
