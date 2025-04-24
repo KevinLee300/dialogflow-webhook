@@ -44,19 +44,32 @@ def webhook():
 
     #logging.info("Intent: %s", intent)       
     if intent == "Default Fallback Intent":
-            # 當為 Fallback Intent 時，發送請求給 OpenAI 生成回應
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "你是一位幫助使用者回答配管設計問題的專家"},
-                    {"role": "user", "content": f"根據以下參數生成回應：{parameters}"}
-                ],
-                max_tokens=50
-            )
-            reply = response.choices[0].message.content.strip()
-        
-    else:
-            reply = "請提供更多信息，我會幫助您。"
+        # 當為 Fallback Intent 時，發送請求給 OpenAI 生成回應
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "你是一位幫助使用者回答配管設計問題的專家"},
+                {"role": "user", "content": f"根據以下參數生成回應：{parameters}"}
+            ],
+            max_tokens=50
+        )
+        reply = response.choices[0].message.content.strip()
+
+        # 直接返回回應，避免執行後續邏輯
+        return jsonify({
+            "fulfillmentText": reply,
+            "outputContexts": [
+                {
+                    "name": f"{session}/contexts/query-followup",
+                    "lifespanCount": 5,
+                    "parameters": {
+                        "category": category,
+                        "spec_type": spec_type,
+                        "type": type_key
+                    }
+                }
+            ]
+        })
 
     if not category:
         contexts = req.get("queryResult", {}).get("outputContexts", [])
