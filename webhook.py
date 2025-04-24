@@ -1,13 +1,13 @@
 from flask import Flask, request, jsonify
 import os
-import openai
+from openai import OpenAI
 import json
 import logging
 
 app = Flask(__name__)
 
 # 設置 OpenAI API 密鑰
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 if openai.api_key:
     print("✅ 成功抓到 OPENAI_API_KEY:", openai.api_key[:5] + "...")
@@ -44,10 +44,10 @@ def webhook():
         
     if intent == "Default Fallback Intent":
             # 當為 Fallback Intent 時，發送請求給 OpenAI 生成回應
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",  # 或 "gpt-4"，根據你的需求選擇模型
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "你是一個有幫助的助手。"},
+                    {"role": "system", "content": "你是一位幫助使用者回答配管設計問題的專家"},
                     {"role": "user", "content": f"根據以下參數生成回應：{parameters}"}
                 ],
                 max_tokens=50
