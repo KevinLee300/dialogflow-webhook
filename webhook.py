@@ -31,6 +31,13 @@ def webhook():
         req = request.get_json()
         query_result = req.get("queryResult", {})
         parameters = query_result.get("parameters", {})
+        for context in query_result.get("outputContexts", []):
+            if context.get("name", "").endswith("/contexts/query-followup"):
+                context_params = context.get("parameters", {})
+                parameters.setdefault("category", context_params.get("category", ""))
+                parameters.setdefault("spec_type", context_params.get("spec_type", ""))
+                parameters.setdefault("TYPE", context_params.get("type", ""))
+
         session = req.get("session", "")
         intent = query_result.get("intent", {}).get("displayName", "")
         user_query = query_result.get("queryText", "")  # 提取使用者的原始輸入
