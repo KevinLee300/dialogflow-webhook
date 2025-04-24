@@ -40,6 +40,19 @@ def webhook():
     spec_type = parameters.get("spec_type", "")
     type_key = parameters.get("TYPE", "").upper()  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
     
+    intent = query_result.get("intent", {}).get("displayName", "")
+        
+    if intent == "Default Fallback Intent":
+            # 當為 Fallback Intent 時，發送請求給 OpenAI 生成回應
+            response = openai.Completion.create(
+                engine="text-davinci-003",
+                prompt=f"根據以下參數生成回應：{parameters}",
+                max_tokens=50
+            )
+            reply = response.choices[0].text.strip()
+    else:
+            reply = "請提供更多信息，我會幫助您。"
+
     if not category:
         contexts = req.get("queryResult", {}).get("outputContexts", [])
         for ctx in contexts:
@@ -70,16 +83,7 @@ def webhook():
             reply = "這是油漆企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/Eebe8nZcWq9EjuakO8mqU9EBzk53IDJ24jtspI6VDlb5Tg?e=1E9yWu"
         else:
             reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
-    else:
-        try:
-            response56 = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=f"根據以下參數生成回應：{parameters}",
-                max_tokens=50
-            )
-            reply = response56.choices[0].text.strip()
-        except Exception as e:
-            reply = "無法生成回應，請稍後再試。"
+
 
     return jsonify({
     "fulfillmentText": reply,
