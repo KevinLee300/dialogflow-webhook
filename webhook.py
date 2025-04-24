@@ -9,8 +9,8 @@ app = Flask(__name__)
 # 設置 OpenAI API 密鑰
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-if openai.api_key:
-    print("✅ 成功抓到 OPENAI_API_KEY:", openai.api_key[:5] + "...")
+if client.api_key:
+    print("✅ 成功抓到 OPENAI_API_KEY:", client.api_key[:5] + "...")
 else:
     print("❌ 沒有找到 OPENAI_API_KEY")
 
