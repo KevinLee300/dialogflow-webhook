@@ -70,17 +70,17 @@ def webhook():
         else:
             reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
     elif category == "管支撐":
-        if "TYPE" in type_key.upper():
+        if spec_type == "塑化":
+            reply = "這是管支撐塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=edJfNW"
+        elif spec_type == "企業":
+            reply = "這是管支撐企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERaG7Grpi7RLhLySygar-E0BqPzegJZTQK19aBUs01C55g?e=c9cAOS"
+        elif "TYPE" in type_key.upper():
             if type_key.upper() in type_links:
                 reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key.upper()]}"
             else:
                 reply = "請提供有效的 TYPE（例如 TYPE01 ~ TYPE140）。"
-        elif spec_type == "塑化":
-            reply = "這是管支撐塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=edJfNW"
-        elif spec_type == "企業":
-            reply = "這是管支撐企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERaG7Grpi7RLhLySygar-E0BqPzegJZTQK19aBUs01C55g?e=c9cAOS"
         else:
-            reply = "請問是要查詢管支撐的「塑化」還是「企業」規範？"    
+            reply = "請問是要查詢管支撐的「塑化」還是「企業」規範？"   
     else:
         reply = "請提供有效的類別（例如 管支撐 或 油漆）。"
 
