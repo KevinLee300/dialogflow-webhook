@@ -56,7 +56,7 @@ def webhook():
                                     "對於不相關的問題（例如腳踏車、電影、食物、天氣等），"
                                     "請不要回答，並請使用者改問與配管設計相關的問題。"
                     },
-                    {"role": "user", "content": user_query}
+                    {"role": "user", "content": "請簡短回答：" + user_query}
                 ],
                 max_tokens=150,
                 temperature=0.2,
