@@ -31,31 +31,28 @@ def webhook():
         req = request.get_json()
         query_result = req.get("queryResult", {})
         parameters = query_result.get("parameters", {})
-        #logging.info("收到的參數：%s", parameters)
-
+        session = req.get("session", "")
+        intent = query_result.get("intent", {}).get("displayName", "")
+        user_query = query_result.get("queryText", "")  # 提取使用者的原始輸入
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
-    session = req.get("session", "") 
-    category = parameters.get("category", "")
-    spec_type = parameters.get("spec_type", "")
-    type_key = parameters.get("TYPE", "").upper()  # 假設 Dialogflow 傳遞的 TYPE 參數名稱為 "type"
-    
-    intent = query_result.get("intent", {}).get("displayName", "")
 
-    #logging.info("Intent: %s", intent)       
+    # 如果是 Default Fallback Intent，直接呼叫 OpenAI API
     if intent == "Default Fallback Intent":
-        # 當為 Fallback Intent 時，發送請求給 OpenAI 生成回應
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "你是一位幫助使用者回答配管設計問題的專家"},
-                {"role": "user", "content": f"根據以下參數生成回應：{parameters}"}
-            ],
-            max_tokens=100
-        )
-        reply = response.choices[0].message.content.strip()
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "你是一位幫助使用者回答配管設計問題的專家"},
+                    {"role": "user", "content": user_query}
+                ],
+                max_tokens=100
+            )
+            reply = response.choices[0].message.content.strip()
+        except Exception as e:
+            reply = "抱歉，我無法處理您的請求，請稍後再試。"
 
-        # 直接返回回應，避免執行後續邏輯
+        # 直接返回 OpenAI 的回應
         return jsonify({
             "fulfillmentText": reply,
             "outputContexts": [
@@ -63,31 +60,25 @@ def webhook():
                     "name": f"{session}/contexts/query-followup",
                     "lifespanCount": 5,
                     "parameters": {
-                        "category": category,
-                        "spec_type": spec_type,
-                        "type": type_key
+                        "category": parameters.get("category", ""),
+                        "spec_type": parameters.get("spec_type", ""),
+                        "type": parameters.get("TYPE", "")
                     }
                 }
             ]
         })
 
-    if not category:
-        contexts = req.get("queryResult", {}).get("outputContexts", [])
-        for ctx in contexts:
-            params = ctx.get("parameters", {})
-            if "category" in params:
-                category = params["category"]
-                break
-
+    # 如果不是 Default Fallback Intent，執行其他邏輯
+    category = parameters.get("category", "")
+    spec_type = parameters.get("spec_type", "")
+    type_key = parameters.get("TYPE", "").upper()
 
     if category == "管支撐":
-        # 檢查是否有 TYPE 的請求
-        if "TYPE" in type_key.upper():  # 將 type_key 轉為大寫進行檢查
-            if type_key.upper() in type_links:  # 同樣將 type_key 轉為大寫匹配 type_links
+        if "TYPE" in type_key.upper():
+            if type_key.upper() in type_links:
                 reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key.upper()]}"
             else:
                 reply = "請提供有效的 TYPE（例如 TYPE01 ~ TYPE140）。"
-        # 處理 spec_type 的邏輯
         elif spec_type == "塑化":
             reply = "這是管支撐塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=edJfNW"
         elif spec_type == "企業":
@@ -101,22 +92,23 @@ def webhook():
             reply = "這是油漆企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/Eebe8nZcWq9EjuakO8mqU9EBzk53IDJ24jtspI6VDlb5Tg?e=1E9yWu"
         else:
             reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
-
+    else:
+        reply = "請提供有效的類別（例如 管支撐 或 油漆）。"
 
     return jsonify({
-    "fulfillmentText": reply,
-    "outputContexts": [
-        {
-            "name": f"{session}/contexts/query-followup",
-            "lifespanCount": 5,
-            "parameters": {
-                "category": category,
-                "spec_type": spec_type,
-                "type": type_key
+        "fulfillmentText": reply,
+        "outputContexts": [
+            {
+                "name": f"{session}/contexts/query-followup",
+                "lifespanCount": 5,
+                "parameters": {
+                    "category": category,
+                    "spec_type": spec_type,
+                    "type": type_key
+                }
             }
-        }
-    ]
-})
+        ]
+    })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
