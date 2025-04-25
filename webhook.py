@@ -78,14 +78,14 @@ def webhook():
 
     if category == "油漆":
         if spec_type == "塑化":
-            reply = "這是油漆塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/EVuPjaS3PC9JkmZFXK9Oh_MBk4zHIYJFQNs2mYOgzqILaQ?e=zDIdfA"
+            reply = "這是油漆塑化規範的下載連結：\nhttps://tinyurl.com/yp59mpat"
         elif spec_type == "企業":
-            reply = "這是油漆企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/Eebe8nZcWq9EjuakO8mqU9EBzk53IDJ24jtspI6VDlb5Tg?e=1E9yWu"
+            reply = "這是油漆企業規範的下載連結：\nhttps://tinyurl.com/c73ajvpt"
         else:
             reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
     elif category == "管支撐":
         if spec_type == "塑化":
-            reply = "這是管支撐塑化規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERTtlkWS33tJjZ4yg2-COYkBVv1DBbVmg0ui8plAduBb4A?e=edJfNW"
+            reply = "這是管支撐塑化規範的下載連結：\nhttps://tinyurl.com/5vk67ywh"
         elif spec_type == "企業":
             reply = "這是管支撐企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERaG7Grpi7RLhLySygar-E0BqPzegJZTQK19aBUs01C55g?e=c9cAOS"
         elif "TYPE" in type_key.upper():
