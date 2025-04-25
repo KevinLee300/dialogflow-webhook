@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 import os
 from openai import OpenAI
 import json
-import logging
 
 app = Flask(__name__)
 
@@ -14,9 +13,6 @@ if client.api_key:
 else:
     print("❌ 沒有找到 OPENAI_API_KEY")
 
-# 配置日誌
-#logging.basicConfig(level=logging.INFO)
-
 # 載入 TYPE 和連結的對應關係
 try:
     with open("links.json", "r", encoding="utf-8") as f:
@@ -24,6 +20,14 @@ try:
 except UnicodeDecodeError as e:
     print(f"讀取 links.json 時發生編碼錯誤：{e}")
     type_links = {}
+
+# 載入配管試壓規範 JSON
+try:
+    with open("piping_specification.json", "r", encoding="utf-8") as f:
+        piping_specification = json.load(f)
+except FileNotFoundError:
+    piping_specification = {}
+    print("❌ 無法找到配管試壓規範的 JSON 檔案。")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -44,8 +48,16 @@ def webhook():
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
 
-    # 如果是 Default Fallback Intent，直接呼叫 OpenAI API
+    # 如果是 Default Fallback Intent
     if intent == "Default Fallback Intent":
+        if "不用用水壓測試" in user_query:
+            # 查詢 JSON 中的相關內容
+            reply = piping_specification.get("scope", {}).get("1.2", "抱歉，無法找到相關的規範內容。")
+            return jsonify({
+                "fulfillmentText": reply
+            })
+
+        # 其他 Default Fallback Intent 的處理邏輯
         try:
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -66,7 +78,6 @@ def webhook():
         except Exception as e:
             reply = "抱歉，我無法處理您的請求，請稍後再試。"
 
-        # 直接返回 OpenAI 的回應
         return jsonify({
             "fulfillmentText": reply
         })
