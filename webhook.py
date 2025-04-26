@@ -39,6 +39,8 @@ def search_piping_spec(question):
     
     # 儲存匹配的內容
     matched_sections = []
+    matched_titles = []  # 儲存匹配段落的標題
+    total_matches = 0  # 總匹配數量
     
     # 檢查問題中是否有關鍵字，並匹配相關段落
     for chapter, data in piping_spec.items():
@@ -52,9 +54,11 @@ def search_piping_spec(question):
             # 檢查問題中的任何關鍵字是否出現在該段落中
             if any(keyword in sec_text_clean for keyword in keywords):
                 matched_sections.append(sec_text)
+                matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
+                total_matches += 1
     
-    # 返回找到的匹配段落（最多三個）
-    return "\n\n".join(matched_sections[:3])
+    # 返回找到的匹配段落（最多三個），還有標題和總匹配數量
+    return "\n\n".join(matched_sections[:3]), matched_titles, total_matches
 
 
 @app.route("/webhook", methods=["POST"])
