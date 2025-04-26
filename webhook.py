@@ -30,19 +30,22 @@ except FileNotFoundError:
     print("❌ 無法找到配管試壓規範的 JSON 檔案。")
 
 def search_piping_spec(question):
-    keywords = ["\u914d\u7ba1", "\u7ba1\u7dda\u8a2d\u8a08", "\u898f\u7bc4"]
+    keywords = ["配管", "管線設計", "規範"]
+    matched_sections = []
+    matched_titles = []
     if any(keyword in question for keyword in keywords):
-        matched_sections = []
         for chapter, data in piping_spec.items():
             title = data.get("title", "")
             content = data.get("content", {})
             if any(keyword in title for keyword in keywords):
                 matched_sections.append(title)
+                matched_titles.append(title)
             for sec_num, sec_text in content.items():
                 if any(keyword in sec_text for keyword in keywords) or any(word in question for word in sec_text):
                     matched_sections.append(sec_text)
-        return "\n\n".join(matched_sections[:3])  # 限制最多 3 篇
-    return None
+                    matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
+        return "\n\n".join(matched_sections[:3]), matched_titles, len(matched_sections)
+    return None, [], 0
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -65,9 +68,11 @@ def webhook():
 
     # 如果是 Default Fallback Intent
     if intent == "Default Fallback Intent":
-        spec_summary = search_piping_spec(user_query)
+        spec_summary, matched_titles, total_matches = search_piping_spec(user_query)
         if spec_summary:
-            reply = f"根據配管規範資料，找到相關內容：\n{spec_summary}"
+            reference = "；建議參考配管共同規範章節：" + "、".join(matched_titles) if matched_titles else ""
+            more_hint = "\n🔔 尚有更多相關章節，建議詳閱完整規範。" if total_matches > 3 else ""
+            reply = f"根據配管規範資料，找到相關內容：\n{spec_summary}\n{reference}{more_hint}"
         else:
             # 找不到，才用 ChatGPT 回答
             try:
