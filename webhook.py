@@ -34,36 +34,41 @@ def search_piping_spec(question):
     # 移除不必要的空白字符並轉小寫
     question_cleaned = question.replace("\u3000", " ").replace(" ", "").lower()
     
-    # 定義關鍵字列表（這些關鍵字可能與化學清洗相關）
-    keywords = ["化學清洗", "清洗要求", "清潔", "去污", "化學處理"]
-    keywords = ["水壓測試", "耐壓測試", "爆破壓力", "水面下測試", "壓力測試", "耐壓", "氣密測試"]
+    # 定義兩組關鍵字
+    cleaning_keywords = ["化學清洗", "清洗要求", "清潔", "去污", "化學處理"]
+    pressure_test_keywords = ["水壓測試", "耐壓測試", "爆破壓力", "水面下測試", "壓力測試", "耐壓", "氣密測試"]
+
+    # 根據問題內容選擇關鍵字
+    if "清洗" in question_cleaned or "去污" in question_cleaned:
+        keywords = cleaning_keywords
+    elif "測試" in question_cleaned or "壓力" in question_cleaned:
+        keywords = pressure_test_keywords
+    else:
+        keywords = cleaning_keywords + pressure_test_keywords  # 預設使用所有關鍵字
 
     # 儲存匹配的內容
     matched_sections = []
-    matched_titles = []  # 儲存匹配段落的標題
-    total_matches = 0  # 總匹配數量
-    
+    matched_titles = []
+    total_matches = 0
+
     # 檢查問題中是否有關鍵字，並匹配相關段落
     for chapter, data in piping_spec.items():
         title = data.get("title", "")
         content = data.get("content", {})
         
         for sec_num, sec_text in content.items():
-            # 清理段落文字，移除空白字符並轉小寫
             sec_text_clean = sec_text.replace("\u3000", " ").replace(" ", "").lower()
-            
-            # 檢查問題中的任何關鍵字是否出現在該段落中
             if any(keyword in sec_text_clean for keyword in keywords):
                 matched_sections.append(sec_text)
                 matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
                 total_matches += 1
+
     if matched_sections:
-        # 取出前三個匹配的段落，並進行簡短摘要
         summary = "\n\n".join(matched_sections[:3])  # 只取前三個匹配的段落
-        summary = summary[:400]  # 確保回覆不超過1000字符
+        summary = summary[:400]  # 確保回覆不超過400字符
         return summary, matched_titles, total_matches
-    # 返回找到的匹配段落（最多三個），還有標題和總匹配數量
-    return "未找到相關水壓測試的規範，請確認問題關鍵字。", [], 0
+
+    return "未找到相關規範，請確認問題關鍵字。", [], 0
 
 
 @app.route("/webhook", methods=["POST"])
