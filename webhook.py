@@ -44,7 +44,7 @@ def search_piping_spec(question):
     elif "測試" in question_cleaned or "壓力" in question_cleaned:
         keywords = pressure_test_keywords
     else:
-        keywords = cleaning_keywords + pressure_test_keywords  # 預設使用所有關鍵字
+        keywords = []  # 如果無法判斷問題類型，則不使用任何關鍵字
 
     # 儲存匹配的內容
     matched_sections = []
@@ -63,8 +63,12 @@ def search_piping_spec(question):
                 matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
                 total_matches += 1
 
+    # 返回匹配結果
     if matched_sections:
-        summary = "\n\n".join(matched_sections[:3])  # 只取前三個匹配的段落
+        if len(matched_sections) > 1:
+            summary = "\n\n".join(matched_sections[:3])  # 只取前三個匹配的段落
+        else:
+            summary = matched_sections[0]  # 只有一個匹配時返回該段落
         summary = summary[:400]  # 確保回覆不超過400字符
         return summary, matched_titles, total_matches
 
