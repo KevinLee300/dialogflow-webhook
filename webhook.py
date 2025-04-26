@@ -36,7 +36,8 @@ def search_piping_spec(question):
     
     # 定義關鍵字列表（這些關鍵字可能與化學清洗相關）
     keywords = ["化學清洗", "清洗要求", "清潔", "去污", "化學處理"]
-    
+    keywords = ["水壓測試", "耐壓測試", "爆破壓力", "水面下測試", "壓力測試", "耐壓", "氣密測試"]
+
     # 儲存匹配的內容
     matched_sections = []
     matched_titles = []  # 儲存匹配段落的標題
@@ -56,9 +57,13 @@ def search_piping_spec(question):
                 matched_sections.append(sec_text)
                 matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
                 total_matches += 1
-    
+    if matched_sections:
+        # 取出前三個匹配的段落，並進行簡短摘要
+        summary = "\n\n".join(matched_sections[:3])  # 只取前三個匹配的段落
+        summary = summary[:400]  # 確保回覆不超過1000字符
+        return summary, matched_titles, total_matches
     # 返回找到的匹配段落（最多三個），還有標題和總匹配數量
-    return "\n\n".join(matched_sections[:3]), matched_titles, total_matches
+    return "未找到相關水壓測試的規範，請確認問題關鍵字。", [], 0
 
 
 @app.route("/webhook", methods=["POST"])
@@ -85,6 +90,8 @@ def webhook():
         spec_summary, matched_titles, total_matches = search_piping_spec(user_query)
         if spec_summary:
             reply = f"根據配管規範資料，找到相關內容：\n{spec_summary}"
+            if total_matches > 3:
+                reply += "\n🔔 尚有更多相關章節，建議詳閱完整規範。"
         else:
             # 找不到，才用 ChatGPT 回答
             try:
