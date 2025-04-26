@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import os
 from openai import OpenAI
 import json
+import re
 
 app = Flask(__name__)
 
@@ -30,18 +31,31 @@ except FileNotFoundError:
     print("❌ 無法找到配管試壓規範的 JSON 檔案。")
 
 def search_piping_spec(question):
-    question_keywords = set(question.replace("\u3000", " ").replace(" ", "").lower())
+    # 移除不必要的空白字符並轉小寫
+    question_cleaned = question.replace("\u3000", " ").replace(" ", "").lower()
+    
+    # 定義關鍵字列表（這些關鍵字可能與化學清洗相關）
+    keywords = ["化學清洗", "清洗要求", "清潔", "去污", "化學處理"]
+    
+    # 儲存匹配的內容
     matched_sections = []
-    matched_titles = []
+    
+    # 檢查問題中是否有關鍵字，並匹配相關段落
     for chapter, data in piping_spec.items():
         title = data.get("title", "")
         content = data.get("content", {})
+        
         for sec_num, sec_text in content.items():
+            # 清理段落文字，移除空白字符並轉小寫
             sec_text_clean = sec_text.replace("\u3000", " ").replace(" ", "").lower()
-            if any(word in sec_text_clean for word in question_keywords):
+            
+            # 檢查問題中的任何關鍵字是否出現在該段落中
+            if any(keyword in sec_text_clean for keyword in keywords):
                 matched_sections.append(sec_text)
-                matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
-    return "\n\n".join(matched_sections[:3]), matched_titles, len(matched_sections)
+    
+    # 返回找到的匹配段落（最多三個）
+    return "\n\n".join(matched_sections[:3])
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -66,9 +80,7 @@ def webhook():
     if intent == "Default Fallback Intent":
         spec_summary, matched_titles, total_matches = search_piping_spec(user_query)
         if spec_summary:
-            reference = "；建議參考配管共同規範章節：" + "、".join(matched_titles) if matched_titles else ""
-            more_hint = "\n🔔 尚有更多相關章節，建議詳閱完整規範。" if total_matches > 3 else ""
-            reply = f"根據配管規範資料，找到相關內容：\n{spec_summary}\n{reference}{more_hint}"
+            reply = f"根據配管規範資料，找到相關內容：\n{spec_summary}"
         else:
             # 找不到，才用 ChatGPT 回答
             try:
