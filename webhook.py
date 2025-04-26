@@ -30,22 +30,18 @@ except FileNotFoundError:
     print("❌ 無法找到配管試壓規範的 JSON 檔案。")
 
 def search_piping_spec(question):
-    keywords = ["配管", "管線設計", "規範"]
+    question_keywords = set(question.replace("\u3000", " ").replace(" ", "").lower())
     matched_sections = []
     matched_titles = []
-    if any(keyword in question for keyword in keywords):
-        for chapter, data in piping_spec.items():
-            title = data.get("title", "")
-            content = data.get("content", {})
-            if any(keyword in title for keyword in keywords):
-                matched_sections.append(title)
-                matched_titles.append(title)
-            for sec_num, sec_text in content.items():
-                if any(keyword in sec_text for keyword in keywords) or any(word in question for word in sec_text):
-                    matched_sections.append(sec_text)
-                    matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
-        return "\n\n".join(matched_sections[:3]), matched_titles, len(matched_sections)
-    return None, [], 0
+    for chapter, data in piping_spec.items():
+        title = data.get("title", "")
+        content = data.get("content", {})
+        for sec_num, sec_text in content.items():
+            sec_text_clean = sec_text.replace("\u3000", " ").replace(" ", "").lower()
+            if any(word in sec_text_clean for word in question_keywords):
+                matched_sections.append(sec_text)
+                matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
+    return "\n\n".join(matched_sections[:3]), matched_titles, len(matched_sections)
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
