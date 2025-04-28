@@ -31,49 +31,60 @@ except FileNotFoundError:
     print("❌ 無法找到配管試壓規範的 JSON 檔案。")
 
 def search_piping_spec(question):
-    # 移除不必要的空白字符並轉小寫
-    question_cleaned = question.replace("\u3000", " ").replace(" ", "").lower()
+    # 清理輸入問題，去除空格並轉換為小寫
+    question_cleaned = re.sub(r"\s+", "", question).lower()
     
-    # 定義兩組關鍵字
+    # 定義關鍵字
     cleaning_keywords = ["化學清洗", "化學處理"]
-    pressure_test_keywords = ["水壓測試", "耐壓測試", "爆破壓力", "水面下測試", "壓力測試", "耐壓", "氣密測試"]
+    pressure_test_keywords = ["水壓測試", "氣壓測試" ]
 
-    # 根據問題內容選擇關鍵字
+    # 根據問題選擇關鍵字
     if "清洗" in question_cleaned or "去污" in question_cleaned:
         keywords = cleaning_keywords
     elif "測試" in question_cleaned or "壓力" in question_cleaned:
         keywords = pressure_test_keywords
     else:
-        keywords = []  # 如果無法判斷問題類型，則不使用任何關鍵字
+        keywords = [question_cleaned]  # 使用問題本身作為關鍵字
 
-    # 儲存匹配的內容
+    # 儲存匹配的章節與子章節
     matched_sections = []
     matched_titles = []
     total_matches = 0
 
-    # 檢查問題中是否有關鍵字，並匹配相關段落
+    # 檢查問題中是否有關鍵字，並匹配相關章節及其子章節
     for chapter, data in piping_spec.items():
         title = data.get("title", "")
         content = data.get("content", {})
-        
-        for sec_num, sec_text in content.items():
-            sec_text_clean = sec_text.replace("\u3000", " ").replace(" ", "").lower()
-            if any(keyword in sec_text_clean for keyword in keywords):
-                matched_sections.append(sec_text)
+
+        # 檢查章節標題是否匹配
+        if any(keyword in title.lower() for keyword in keywords):
+            matched_sections.append(f"第{chapter}章 {title}")  # 添加章節標題
+            matched_titles.append(f"第{chapter}章 {title}")
+            total_matches += 1
+
+            # 添加該章節的第一個子章節內容
+            sorted_content = sorted(content.items(), key=lambda x: x[0])  # 按子章節編號排序
+            for sec_num, sec_text in sorted_content:
+                matched_sections.append(f"{sec_num} {sec_text}")
                 matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
                 total_matches += 1
 
-    # 返回匹配結果
-    if matched_sections:
-        if len(matched_sections) > 1:
-            summary = "\n\n".join(matched_sections[:3])  # 只取前三個匹配的段落
         else:
-            summary = matched_sections[0]  # 只有一個匹配時返回該段落
+            # 檢查子章節內容是否匹配
+            for sec_num, sec_text in content.items():
+                sec_text_clean = re.sub(r"\s+", "", sec_text).lower()
+                if any(keyword in sec_text_clean for keyword in keywords):
+                    matched_sections.append(f"{sec_num} {sec_text}")
+                    matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
+                    total_matches += 1
+
+    # 彙整重點
+    if matched_sections:
+        summary = "\n".join(matched_sections)  # 合併所有匹配的段落
         summary = summary[:400]  # 確保回覆不超過400字符
         return summary, matched_titles, total_matches
 
     return "未找到相關規範，請確認問題關鍵字。", [], 0
-
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -98,19 +109,20 @@ def webhook():
     if intent == "Default Fallback Intent":
         spec_summary, matched_titles, total_matches = search_piping_spec(user_query)
         if spec_summary:
-            reply = f"根據配管規範資料，找到相關內容：\n{spec_summary}"
+            reply = f"根據企業配管共同規範資料，找到相關內容：\n{spec_summary}"
             if total_matches > 3:
                 reply += "\n🔔 尚有更多相關章節，建議詳閱完整規範。"
         else:
             # 找不到，才用 ChatGPT 回答
             try:
+                print("正在使用的模型：gpt-3.5-turbo")
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "你是配管設計專家，不回答與配管無關的訊息。"},
-                        {"role": "user", "content": "請簡短回答：" + user_query}
+                        {"role": "user", "content": user_query}
                     ],
-                    max_tokens=150,
+                    max_tokens=500,
                     temperature=0.2,
                     top_p=0.8
                 )
