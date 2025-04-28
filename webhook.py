@@ -35,7 +35,7 @@ def search_piping_spec(question):
     question_cleaned = question.replace("\u3000", " ").replace(" ", "").lower()
     
     # 定義兩組關鍵字
-    cleaning_keywords = ["化學清洗", "清洗要求", "清潔", "去污", "化學處理"]
+    cleaning_keywords = ["化學清洗", "化學處理"]
     pressure_test_keywords = ["水壓測試", "耐壓測試", "爆破壓力", "水面下測試", "壓力測試", "耐壓", "氣密測試"]
 
     # 根據問題內容選擇關鍵字
@@ -138,7 +138,7 @@ def webhook():
             reply = "這是管支撐塑化規範的下載連結：\nhttps://tinyurl.com/5vk67ywh"
         elif spec_type == "企業":
             reply = "這是管支撐企業規範的下載連結：\nhttps://tinyurl.com/msxhmnha"
-        elif "TYPE" in type_key.upper():
+        elif type_key:
             if type_key.upper() in type_links:
                 reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key.upper()]}"
             else:
