@@ -137,7 +137,7 @@ def webhook():
         if spec_type == "塑化":
             reply = "這是管支撐塑化規範的下載連結：\nhttps://tinyurl.com/5vk67ywh"
         elif spec_type == "企業":
-            reply = "這是管支撐企業規範的下載連結：\nhttps://1drv.ms/b/c/c2f6a4a69f694f7a/ERaG7Grpi7RLhLySygar-E0BqPzegJZTQK19aBUs01C55g?e=c9cAOS"
+            reply = "這是管支撐企業規範的下載連結：\nhttps://tinyurl.com/msxhmnha"
         elif "TYPE" in type_key.upper():
             if type_key.upper() in type_links:
                 reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key.upper()]}"
