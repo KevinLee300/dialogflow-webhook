@@ -51,40 +51,42 @@ def search_piping_spec(question):
     matched_titles = []
     total_matches = 0
 
-    # 檢查問題中是否有關鍵字，並匹配相關章節及其子章節
     for chapter, data in piping_spec.items():
         title = data.get("title", "")
         content = data.get("content", {})
+        
+        chapter_matched = False
 
-        # 檢查章節標題是否匹配
+        # 優先比對章節標題
         if any(keyword in title.lower() for keyword in keywords):
-            matched_sections.append(f"第{chapter}章 {title}")  # 添加章節標題
+            chapter_matched = True
+
+        # 如果章節標題沒有命中，再檢查子章節
+        if not chapter_matched:
+            for sec_num, sec_text in content.items():
+                sec_text_clean = re.sub(r"\s+", "", sec_text).lower()
+                if question_cleaned in sec_text_clean:
+                    chapter_matched = True
+                    break
+
+        # 如果有命中
+        if chapter_matched:
+            matched_sections.append(f"第{chapter}章 {title}")
             matched_titles.append(f"第{chapter}章 {title}")
             total_matches += 1
 
-            # 添加該章節的第一個子章節內容
-            sorted_content = sorted(content.items(), key=lambda x: x[0])  # 按子章節編號排序
+            sorted_content = sorted(content.items(), key=lambda x: x[0])
             for sec_num, sec_text in sorted_content:
                 matched_sections.append(f"{sec_num} {sec_text}")
                 matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
                 total_matches += 1
 
-        else:
-            # 檢查子章節內容是否匹配
-            for sec_num, sec_text in content.items():
-                sec_text_clean = re.sub(r"\s+", "", sec_text).lower()
-                if any(keyword in sec_text_clean for keyword in keywords):
-                    matched_sections.append(f"{sec_num} {sec_text}")
-                    matched_titles.append(f"第{chapter}章 {title} - {sec_num}")
-                    total_matches += 1
-
-    # 彙整重點
     if matched_sections:
-        summary = "\n".join(matched_sections)  # 合併所有匹配的段落
-        summary = summary[:400]  # 確保回覆不超過400字符
+        summary = "\n".join(matched_sections)
+        # 不砍掉，回傳完整，讓上層決定要不要切分
         return summary, matched_titles, total_matches
 
-    return "未找到相關規範，請確認問題關鍵字。", [], 0
+    return "", [], 0
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -105,21 +107,22 @@ def webhook():
     except Exception as e:
         return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
 
-    # 如果是 Default Fallback Intent
     if intent == "Default Fallback Intent":
         spec_summary, matched_titles, total_matches = search_piping_spec(user_query)
-        if spec_summary:
-            reply = f"根據企業配管共同規範資料，找到相關內容：\n{spec_summary}"
-            if total_matches > 3:
-                reply += "\n🔔 尚有更多相關章節，建議詳閱完整規範。"
+
+        if total_matches > 0:
+            if len(spec_summary) > 500:
+                reply = f"根據企業配管共同規範資料，找到相關內容(已截取)：\n{spec_summary[:500]}...\n🔔 內容過長，請查閱完整規範。"
+            else:
+                reply = f"根據企業配管共同規範資料，找到相關內容：\n{spec_summary}"
         else:
-            # 找不到，才用 ChatGPT 回答
+            # 如果找不到，呼叫ChatGPT
             try:
-                print("正在使用的模型：gpt-3.5-turbo")
+                print("🔍 呼叫 GPT-3.5-Turbo 回答...")
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
-                        {"role": "system", "content": "你是配管設計專家，不回答與配管無關的訊息。"},
+                        {"role": "system", "content": "你是配管設計專家，只回答與配管相關的問題。"},
                         {"role": "user", "content": user_query}
                     ],
                     max_tokens=500,
@@ -128,12 +131,14 @@ def webhook():
                 )
                 reply = response.choices[0].message.content.strip()
             except Exception as e:
-                reply = "抱歉，我無法處理您的請求，請稍後再試。"
+                print("❌ GPT 呼叫失敗:", e)
+                reply = "抱歉，目前無法處理您的請求。請稍後再試。"
 
         return jsonify({
             "fulfillmentText": reply
         })
     # 如果不是 Default Fallback Intent，執行其他邏輯
+
     category = parameters.get("category", "")
     spec_type = parameters.get("spec_type", "")
     type_key = parameters.get("TYPE", "").upper()
