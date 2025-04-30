@@ -151,17 +151,17 @@ def webhook():
         else:
             reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
     elif category == "管支撐":
-        if spec_type == "塑化":
-            reply = "這是管支撐塑化規範的下載連結：\nhttps://tinyurl.com/5vk67ywh"
-        elif spec_type == "企業":
-            reply = "這是管支撐企業規範的下載連結：\nhttps://tinyurl.com/msxhmnha"
-        elif type_key:
+        if type_key:
             if type_key.upper() in type_links:
                 reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key.upper()]}"
             else:
                 reply = "請提供有效的 TYPE（例如 TYPE01 ~ TYPE140）。"
+        elif spec_type == "塑化":
+            reply = "這是管支撐塑化規範的下載連結：\nhttps://tinyurl.com/5vk67ywh"
+        elif spec_type == "企業":
+            reply = "這是管支撐企業規範的下載連結：\nhttps://tinyurl.com/msxhmnha"        
         else:
-            reply = "請問是要查詢管支撐的「塑化」還是「企業」規範？"   
+            reply = "請問是要查詢管支撐的「塑化」還是「企業」規範，或提供 TYPE（例如 TYPE01）？"   
     else:
         reply = "請提供有效的類別（例如 管支撐 或 油漆）。"
 
@@ -183,3 +183,5 @@ def webhook():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+# (Removed invalid Python code)ngrok http 5000
