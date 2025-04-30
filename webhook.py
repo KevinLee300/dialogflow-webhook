@@ -225,14 +225,20 @@ def webhook():
         context_params = {}  # 清空上下文參數
         
 # ✅ 使用者輸入的是來源（企業／塑化），且 context 已有 category       
-    if user_query in ["企業", "塑化"] and category:
-        source = user_query
-        return jsonify({
-            "fulfillmentMessages": [
-                payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])
-            ],
-            "outputContexts": output_context({"category": category, "source": source})
-        })
+    if user_query in ["企業", "塑化"]:
+        if category:
+            source = user_query
+            return jsonify({
+                "fulfillmentMessages": [
+                    payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])
+                ],
+                "outputContexts": output_context({"category": category, "source": source})
+            })
+        else:
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
+                "outputContexts": output_context({})
+            })
 
 # ✅ 尚未選來源
     if not source:
@@ -241,11 +247,12 @@ def webhook():
                 "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": output_context({})
             })
-        source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
-        return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
-            "outputContexts": output_context({"category": category})
-        })
+        else:
+            source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
+                "outputContexts": output_context({"category": category})
+            })
 
         
     # ✅ 處理使用者想下載或詢問內容
@@ -304,7 +311,7 @@ def webhook():
     # 如果不是 Default Fallback Intent，執行其他邏輯
 
     return jsonify({
-        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
+        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["管支撐", "油漆", "鋼構", "保溫"])],
         "outputContexts": output_context({})
     })
 
