@@ -218,18 +218,6 @@ def webhook():
                 "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
             })
         
-# ✅ 使用者只輸入「企業」或「塑化」來源，且已有類別
-    if user_query in ["企業", "塑化"] and category:
-        return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
-            "outputContexts": [
-                {
-                    "name": f"{session}/contexts/spec-context",
-                    "lifespanCount": 5,
-                    "parameters": {"category": category, "source": user_query}
-                }
-            ]
-        })
     # ✅ 使用者已選類別但尚未選來源
     if not source:
         if not category:
