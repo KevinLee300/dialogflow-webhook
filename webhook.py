@@ -189,14 +189,9 @@ def webhook():
 
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
-    extracted = extract_from_query(user_query)  # 你自定義的 NLP 擷取函數
-    if user_query in ["企業", "塑化"]:
-        source = user_query
-    else:
-        source = extracted.get("source") or context_params.get("source", "")
-
-    # category 舊的還是保留為 fallback 的優先順序
-    category = extracted.get("category") or context_params.get("category", "")
+    extracted = extract_from_query(user_query)  # 自定義的 NLP 擷取函數
+    source = extracted.get("source", "")
+    category = extracted.get("category", "")
     action = extracted.get("action", "")
 
     print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
@@ -224,6 +219,10 @@ def webhook():
             return jsonify({
                 "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
             })
+        
+            # 如果提問者輸入的問題與之前的上下文無關，清空 source 和 action
+    if not category and not source and not action:
+        context_params = {}  # 清空上下文參數
         
  # ✅ 使用者輸入的是來源（企業／塑化），且 context 已有 category       
     if user_query in ["企業", "塑化"] and category:
