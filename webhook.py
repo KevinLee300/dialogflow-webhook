@@ -174,18 +174,19 @@ def webhook():
     session = req.get("session", "")
     intent = query_result.get("intent", {}).get("displayName", "")
 
-    def output_context(params):
-        return [{
-            "name": f"{session}/contexts/spec-context",
-            "lifespanCount": 5,
-            "parameters": params
-        }]
-    
     # 取得 context 參數
     context_params = {}
     for context in query_result.get("outputContexts", []):
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
+
+    def output_context(params):
+        return [{
+            "name": f"{session}/contexts/spec-context",
+            "lifespanCount": 5,
+            "parameters": params
+        }]   
+
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
     extracted = extract_from_query(user_query)
@@ -225,18 +226,17 @@ def webhook():
         })      
       
     # 檢查是否成功提取 category 和 source
-    if not category or not source:
+    if not source:
         if not category:
             return jsonify({
                 "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": output_context({})
             })
-        else:
-            source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
-            return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
-                "outputContexts": output_context({"category": category})
-            })      
+        source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
+            "outputContexts": output_context({"category": category})
+        })     
 
     # 主邏輯處理
     if action or any(keyword in user_query for keyword in ["規範", "資料", "標準圖"]):
@@ -290,7 +290,10 @@ def webhook():
         })
     # 如果不是 Default Fallback Intent，執行其他邏輯
 
-    return jsonify({"fulfillmentText": "請輸入有效的查詢，例如：查詢規範、管支撐、油漆等。"})    
+    return jsonify({
+        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
+        "outputContexts": output_context({})
+    })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
