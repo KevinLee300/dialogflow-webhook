@@ -114,6 +114,33 @@ def query_download_link(category, source):
     }
     return links.get((category, source), "查無對應的下載連結")
 
+def extract_from_query(text):
+    categories = ["管支撐", "油漆"]
+    sources = ["企業", "塑化"]
+    actions_map = {
+        "查詢": "詢問內容",
+        "查": "詢問內容",
+        "詢問": "詢問內容",
+        "找": "詢問內容",
+        "下載": "下載",
+        "給我": "下載",
+        "提供": "下載",
+    }
+
+    found = {}
+    for c in categories:
+        if c in text:
+            found["category"] = c
+    for s in sources:
+        if s in text:
+            found["source"] = s
+    for keyword, action in actions_map.items():
+        if keyword in text:
+            found["action"] = action
+            break
+    return found
+
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     req = request.get_json()
@@ -127,44 +154,50 @@ def webhook():
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
-    category = context_params.get("category", "")
-    source = context_params.get("source", "")
+    def output_context(params):
+        return [{
+            "name": f"{session}/contexts/spec-context",
+            "lifespanCount": 5,
+            "parameters": params
+        }]
 
-    if user_query in ["查詢規範"]:
-        return jsonify({
-            "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
-            "outputContexts": [
-                {
-                    "name": f"{session}/contexts/spec-context",
-                    "lifespanCount": 5,
-                    "parameters": {}
-                }
-            ]
-        })
-    
-    if user_query in ["管支撐", "油漆"]:
-        return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{user_query}：請選擇來源類型", ["企業", "塑化"])],
-            "outputContexts": [
-                {
-                    "name": f"{session}/contexts/spec-context",
-                    "lifespanCount": 5,
-                    "parameters": {"category": user_query}
-                }
-            ]
-        })
-    
+    # 統一取得參數：優先從 query 抽出，否則使用 context 中值
+    extracted = extract_from_query(user_query)
+    category = extracted.get("category", context_params.get("category", ""))
+    source = extracted.get("source", context_params.get("source", ""))
+    action = extracted.get("action", "")
+
+
+
+    # 主邏輯處理
+    if action and "規範" in user_query: # 若有動作且包含規範字樣
+        if not category: # 如果沒有指定 category，讓用戶選擇規範類別
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
+                "outputContexts": output_context({})
+            })
+        elif not source: # 如果已經指定了 category，則提示選擇來源類型
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
+                "outputContexts": output_context({"category": category})
+            })
+        elif action == "下載":
+            link = query_download_link(category, source)
+            return jsonify({
+                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"
+            })
+        else:
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])],
+                "outputContexts": output_context({"category": category, "source": source})
+            })
+
     if user_query in ["企業", "塑化"] and category:
         return jsonify({
             "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
-            "outputContexts": [
-                {
-                    "name": f"{session}/contexts/spec-context",
-                    "lifespanCount": 5,
-                    "parameters": {"category": category, "source": user_query}
-                }
-            ]
+            "outputContexts": output_context({"category": category, "source": user_query})
         })
+
 
     if user_query == "下載" and category and source:
         link = query_download_link(category, source)
