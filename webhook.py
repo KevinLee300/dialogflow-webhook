@@ -174,7 +174,7 @@ def webhook():
     session = req.get("session", "")
     intent = query_result.get("intent", {}).get("displayName", "")
 
-    # 取得 context 參數
+    # 讀取 context 中的參數
     context_params = {}
     for context in query_result.get("outputContexts", []):
         if "spec-context" in context.get("name", ""):
@@ -185,11 +185,11 @@ def webhook():
             "name": f"{session}/contexts/spec-context",
             "lifespanCount": 5,
             "parameters": params
-        }]   
+        }] 
 
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
-    extracted = extract_from_query(user_query)
+    extracted = extract_from_query(user_query)  # 你自定義的 NLP 擷取函數
     category = extracted.get("category", context_params.get("category", ""))
     source = extracted.get("source", context_params.get("source", ""))
     action = extracted.get("action", "")
@@ -218,31 +218,33 @@ def webhook():
                 "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
             })
         
-     
-      
-    # 檢查是否成功提取 category 和 source
-    if not category or not source:
+# ✅ 使用者只輸入「企業」或「塑化」來源，且已有類別
+    if user_query in ["企業", "塑化"] and category:
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
+            "outputContexts": [
+                {
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {"category": category, "source": user_query}
+                }
+            ]
+        })
+    # ✅ 使用者已選類別但尚未選來源
+    if not source:
         if not category:
             return jsonify({
                 "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": output_context({})
             })
-        elif not source:
-            source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
-            return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
-                "outputContexts": output_context({"category": category})
-            })
-        
-# ✅ 使用者只輸入「企業」或「塑化」來源，且已有類別
-    if user_query in ["企業", "塑化"] and category:
+        source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
         return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
-            "outputContexts": output_context({"category": category, "source": user_query})
-        }) 
-    
+            "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
+            "outputContexts": output_context({"category": category})
+        })
+        
     # 主邏輯處理
-    if action or any(keyword in user_query for keyword in ["規範", "資料", "標準圖"]):
+    if action or any(k in user_query for k in ["規範", "資料", "標準圖"]):
         if action == "下載":
             link = query_download_link(category, source)
             return jsonify({
