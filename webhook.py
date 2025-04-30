@@ -162,10 +162,10 @@ def webhook():
         }]
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
-    extracted = extract_from_query(user_query)
-    category = extracted.get("category", context_params.get("category", ""))
-    source = extracted.get("source", context_params.get("source", ""))
-    action = extracted.get("action", "")
+    extracted_data = extract_from_query(user_query)
+    category = extracted_data.get("category", context_params.get("category", ""))
+    source = extracted_data.get("source", "")  # 不從 context 中讀取 source，讓它不被保存
+    action = extracted_data.get("action", "")
 
 
 
