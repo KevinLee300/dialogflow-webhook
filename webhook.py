@@ -224,7 +224,7 @@ def webhook():
     if not category and not source and not action:
         context_params = {}  # 清空上下文參數
         
- # ✅ 使用者輸入的是來源（企業／塑化），且 context 已有 category       
+# ✅ 使用者輸入的是來源（企業／塑化），且 context 已有 category       
     if user_query in ["企業", "塑化"] and category:
         source = user_query
         return jsonify({
@@ -232,9 +232,9 @@ def webhook():
                 payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])
             ],
             "outputContexts": output_context({"category": category, "source": source})
-        })    
-        
-    # ✅ 尚未選來源
+        })
+
+# ✅ 尚未選來源
     if not source:
         if not category:
             return jsonify({
