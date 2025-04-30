@@ -190,9 +190,11 @@ def webhook():
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
     extracted = extract_from_query(user_query)  # 你自定義的 NLP 擷取函數
-    category = extracted.get("category", context_params.get("category", ""))
-    source = extracted.get("source", context_params.get("source", ""))
+    category = extracted.get("category") or context_params.get("category", "")
+    source = extracted.get("source") or context_params.get("source", "")
     action = extracted.get("action", "")
+
+    print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
 
     if re.search(r"(?:TY(?:PE)?)[-\s]*\d{1,3}[A-Z]?", user_query.upper()):
         category = "管支撐"
@@ -226,7 +228,7 @@ def webhook():
                 payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])
             ],
             "outputContexts": output_context({"category": category, "source": source})
-        })        
+        })    
         
     # ✅ 尚未選來源
     if not source:
@@ -245,9 +247,8 @@ def webhook():
     # ✅ 處理使用者想下載或詢問內容
     if action or any(k in user_query for k in ["規範", "資料", "標準圖"]):
         if action == "下載":
-            link = query_download_link(category, source)
             return jsonify({
-                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"
+                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{query_download_link(category, source)}"
             })
         else:
             return jsonify({
@@ -259,10 +260,10 @@ def webhook():
 
     # ✅ 使用者單獨輸入「下載」時
     if user_query == "下載" and category and source:
-        link = query_download_link(category, source)
-        return jsonify({"fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"})
+        return jsonify({
+            "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{query_download_link(category, source)}"
+        })
 
-    # ✅ 詢問內容處理
     if user_query == "詢問內容":
         return jsonify({"fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。"})
 
