@@ -170,7 +170,7 @@ def webhook():
 
 
     # 主邏輯處理
-    if action and "規範" in user_query: # 若有動作且包含規範字樣
+    if action or any(keyword in user_query for keyword in ["規範", "資料", "標準圖"]):
         if not category: # 如果沒有指定 category，讓用戶選擇規範類別
             return jsonify({
                 "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
