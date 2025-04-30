@@ -195,6 +195,12 @@ def webhook():
         category = "管支撐"
         source = "塑化"
 
+    if user_query in ["企業", "塑化"] and category:
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
+            "outputContexts": output_context({"category": category, "source": user_query})
+        })
+    
     # 檢查是否提到 TYPE 編號
     match = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
     if match:
@@ -214,7 +220,7 @@ def webhook():
             return jsonify({
                 "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
             })
-
+        
     # 檢查是否成功提取 category 和 source
     if not category or not source:
         # 如果 category 或 source 不完整，則提示用戶選擇
