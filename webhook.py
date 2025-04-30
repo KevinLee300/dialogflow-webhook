@@ -87,8 +87,8 @@ def search_piping_spec(question):
         return summary, matched_titles, total_matches
 
     return "", [], 0
-
-def payload_with_buttons(text, options):
+#LINE 按鈕程式
+def payload_with_buttons(text, options):    
     return {
         "payload": {
             "line": {
@@ -108,15 +108,26 @@ def payload_with_buttons(text, options):
 def query_download_link(category, source):
     links = {
         ("油漆", "塑化"): "https://tinyurl.com/yp59mpat",
-        ("油漆", "企業"): "https://tinyurl.com/c73ajvpt",
+        ("油漆", "企業"): "https://tinyurl.com/c73ajvpt\n保溫層下方油漆防蝕暫行辦法\nhttps://tinyurl.com/2s3me8jh",
         ("管支撐", "塑化"): "https://tinyurl.com/5vk67ywh",
-        ("管支撐", "企業"): "https://tinyurl.com/msxhmnha"
+        ("管支撐", "企業"): "https://tinyurl.com/msxhmnha",
+        ("鋼構", "塑化"): "https://tinyurl.com/3tdcxe5v",
+        ("鋼構", "企業"): "https://tinyurl.com/mvb9yzhw",
+        ("保溫", "企業"): "https://tinyurl.com/2s4cb5cn"
     }
     return links.get((category, source), "查無對應的下載連結")
 
 def extract_from_query(text):
-    categories = ["管支撐", "油漆"]
+    categories = ["管支撐", "油漆", "鋼構", "保溫"]
     sources = ["企業", "塑化"]
+
+    category_keywords = {
+        "管支撐": ["管支撐", "支撐", "管道支撐", "TYPE"],
+        "油漆": ["油漆", "塗裝", "漆", "涂料", "painting"],
+        "保溫": ["保溫", "隔熱", "熱保", "隔熱保溫"],
+        "鋼構": ["鋼構", "鋼結構", "結構鋼", "鋼架", "結構", "結構體", "鋼板", "鋼鐵板", "鋼梁", "鋼樑", "鋼結構規範", "鋼構規範", "結構設計規範"],
+    }
+
     actions_map = {
         "查詢": "詢問內容",
         "查": "詢問內容",
@@ -127,18 +138,31 @@ def extract_from_query(text):
         "提供": "下載",
     }
 
-    found = {}
-    for c in categories:
-        if c in text:
-            found["category"] = c
-    for s in sources:
-        if s in text:
-            found["source"] = s
-    for keyword, action in actions_map.items():
-        if keyword in text:
-            found["action"] = action
+    # 初始化返回結果
+    extracted = {"category": "", "source": "", "action": ""}
+
+    # 檢查是否有匹配的 category
+    for category, keywords in category_keywords.items():
+        if any(keyword in text for keyword in keywords):
+            extracted["category"] = category
             break
-    return found
+
+    # 檢查是否有匹配的 source，且保溫類別只會選擇企業
+    if extracted["category"] == "保溫":
+        extracted["source"] = "企業"
+    else:
+        for src in sources:
+            if src in text:
+                extracted["source"] = src
+                break
+
+    # 檢查是否有匹配的 action
+    for keyword, mapped in actions_map.items():
+        if keyword in text:
+            extracted["action"] = mapped
+            break
+
+    return extracted
 
 
 @app.route("/webhook", methods=["POST"])
@@ -160,39 +184,77 @@ def webhook():
             "lifespanCount": 5,
             "parameters": params
         }]
-
+    
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
     extracted = extract_from_query(user_query)
     category = extracted.get("category", context_params.get("category", ""))
     source = extracted.get("source", context_params.get("source", ""))
     action = extracted.get("action", "")
 
+    if re.search(r"(?:TY(?:PE)?)[-\s]*\d{1,3}[A-Z]?", user_query.upper()):
+        category = "管支撐"
+        source = "塑化"
+
+    # 檢查是否提到 TYPE 編號
+    match = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
+    if match:
+        type_id = match.group(1)
+        # 判斷是否有英文字尾
+        if type_id[-1].isalpha():
+            type_key = f"TYPE{type_id[:-1].zfill(2)}{type_id[-1]}"
+        else:
+            type_key = f"TYPE{type_id.zfill(2)}"
+
+        if type_key in type_links:
+            link = type_links[type_key]
+            return jsonify({
+                "fulfillmentText": f"這是管支撐規範（塑化）{type_key} 的下載連結：\n{link}"
+            })
+        else:
+            return jsonify({
+                "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
+            })
+
     # 檢查是否成功提取 category 和 source
     if not category or not source:
         # 如果 category 或 source 不完整，則提示用戶選擇
         if not category:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": output_context({})
             })
         elif not source:
-            return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
-                "outputContexts": output_context({"category": category})
-            })
+            # 根據 category 決定可選的 source
+            if category == "保溫":
+                return jsonify({
+                    "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業"])],
+                    "outputContexts": output_context({"category": category})
+                })
+            else:
+                return jsonify({
+                    "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
+                    "outputContexts": output_context({"category": category})
+                })       
+
 
     # 主邏輯處理
     if action or any(keyword in user_query for keyword in ["規範", "資料", "標準圖"]):
         if not category: # 如果沒有指定 category，讓用戶選擇規範類別
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": output_context({})
             })
-        elif not source: # 如果已經指定了 category，則提示選擇來源類型
-            return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
-                "outputContexts": output_context({"category": category})
-            })
+        elif not source:  # 如果已經指定了 category，則提示選擇來源類型
+            if category == "保溫":
+                return jsonify({
+                    "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業"])],
+                    "outputContexts": output_context({"category": category})
+                })
+            else:
+                return jsonify({
+                    "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
+                    "outputContexts": output_context({"category": category})
+                })
         elif action == "下載":
             link = query_download_link(category, source)
             return jsonify({
