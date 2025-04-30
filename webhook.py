@@ -218,26 +218,29 @@ def webhook():
                 "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
             })
         
-# ✅ 使用者只輸入「企業」或「塑化」來源，且已有類別
-    if user_query in ["企業", "塑化"] and category:
-        return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
-            "outputContexts": output_context({"category": category, "source": user_query})
-        })      
+     
       
     # 檢查是否成功提取 category 和 source
-    if not source:
+    if not category or not source:
         if not category:
             return jsonify({
                 "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": output_context({})
             })
-        source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
+        elif not source:
+            source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
+                "outputContexts": output_context({"category": category})
+            })
+        
+# ✅ 使用者只輸入「企業」或「塑化」來源，且已有類別
+    if user_query in ["企業", "塑化"] and category:
         return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
-            "outputContexts": output_context({"category": category})
-        })     
-
+            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
+            "outputContexts": output_context({"category": category, "source": user_query})
+        }) 
+    
     # 主邏輯處理
     if action or any(keyword in user_query for keyword in ["規範", "資料", "標準圖"]):
         if action == "下載":
