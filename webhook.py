@@ -88,24 +88,90 @@ def search_piping_spec(question):
 
     return "", [], 0
 
+def payload_with_buttons(text, options):
+    return {
+        "payload": {
+            "line": {
+                "type": "template",
+                "altText": text,
+                "template": {
+                    "type": "buttons",
+                    "text": text,
+                    "actions": [
+                        {"type": "message", "label": opt, "text": opt} for opt in options
+                    ]
+                }
+            }
+        }
+    }
+
+def query_download_link(category, source):
+    links = {
+        ("油漆", "塑化"): "https://tinyurl.com/yp59mpat",
+        ("油漆", "企業"): "https://tinyurl.com/c73ajvpt",
+        ("管支撐", "塑化"): "https://tinyurl.com/5vk67ywh",
+        ("管支撐", "企業"): "https://tinyurl.com/msxhmnha"
+    }
+    return links.get((category, source), "查無對應的下載連結")
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    try:
-        req = request.get_json()
-        query_result = req.get("queryResult", {})
-        parameters = query_result.get("parameters", {})
-        for context in query_result.get("outputContexts", []):
-            if context.get("name", "").endswith("/contexts/query-followup"):
-                context_params = context.get("parameters", {})
-                parameters.setdefault("category", context_params.get("category", ""))
-                parameters.setdefault("spec_type", context_params.get("spec_type", ""))
-                parameters.setdefault("TYPE", context_params.get("type", ""))
+    req = request.get_json()
+    query_result = req.get("queryResult", {})
+    user_query = query_result.get("queryText", "")
+    session = req.get("session", "")
+    intent = query_result.get("intent", {}).get("displayName", "")
 
-        session = req.get("session", "")
-        intent = query_result.get("intent", {}).get("displayName", "")
-        user_query = query_result.get("queryText", "")  # 提取使用者的原始輸入
-    except Exception as e:
-        return jsonify({"fulfillmentText": "發生錯誤，請稍後再試。"})
+    context_params = {}
+    for context in query_result.get("outputContexts", []):
+        if "spec-context" in context.get("name", ""):
+            context_params = context.get("parameters", {})
+
+    category = context_params.get("category", "")
+    source = context_params.get("source", "")
+
+    if user_query in ["查詢規範"]:
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
+            "outputContexts": [
+                {
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {}
+                }
+            ]
+        })
+    
+    if user_query in ["管支撐", "油漆"]:
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons(f"{user_query}：請選擇來源類型", ["企業", "塑化"])],
+            "outputContexts": [
+                {
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {"category": user_query}
+                }
+            ]
+        })
+    
+    if user_query in ["企業", "塑化"] and category:
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
+            "outputContexts": [
+                {
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {"category": category, "source": user_query}
+                }
+            ]
+        })
+
+    if user_query == "下載" and category and source:
+        link = query_download_link(category, source)
+        return jsonify({"fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"})
+
+    if user_query == "詢問內容":
+        return jsonify({"fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。"})
 
     if intent == "Default Fallback Intent":
         spec_summary, matched_titles, total_matches = search_piping_spec(user_query)
@@ -139,46 +205,9 @@ def webhook():
         })
     # 如果不是 Default Fallback Intent，執行其他邏輯
 
-    category = parameters.get("category", "")
-    spec_type = parameters.get("spec_type", "")
-    type_key = parameters.get("TYPE", "").upper()
+    return jsonify({"fulfillmentText": "請輸入有效的查詢，例如：查詢規範、管支撐、油漆等。"})
 
-    if category == "油漆":
-        if spec_type == "塑化":
-            reply = "這是油漆塑化規範的下載連結：\nhttps://tinyurl.com/yp59mpat"
-        elif spec_type == "企業":
-            reply = "這是油漆企業規範的下載連結：\nhttps://tinyurl.com/c73ajvpt"
-        else:
-            reply = "請問是要查詢油漆的「塑化」還是「企業」規範？"
-    elif category == "管支撐":
-        if type_key:
-            if type_key.upper() in type_links:
-                reply = f"這是管支撐 {type_key} 的下載連結：\n{type_links[type_key.upper()]}"
-            else:
-                reply = "請提供有效的 TYPE（例如 TYPE01 ~ TYPE140）。"
-        elif spec_type == "塑化":
-            reply = "這是管支撐塑化規範的下載連結：\nhttps://tinyurl.com/5vk67ywh"
-        elif spec_type == "企業":
-            reply = "這是管支撐企業規範的下載連結：\nhttps://tinyurl.com/msxhmnha"        
-        else:
-            reply = "請問是要查詢管支撐的「塑化」還是「企業」規範，或提供 TYPE（例如 TYPE01）？"   
-    else:
-        reply = "請提供有效的類別（例如 管支撐 或 油漆）。"
-
-    return jsonify({
-        "fulfillmentText": reply,
-        "outputContexts": [
-            {
-                "name": f"{session}/contexts/query-followup",
-                "lifespanCount": 5,
-                "parameters": {
-                    "category": category,
-                    "spec_type": spec_type,
-                    "type": type_key
-                }
-            }
-        ]
-    })
+    
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
