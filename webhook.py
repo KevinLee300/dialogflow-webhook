@@ -162,12 +162,24 @@ def webhook():
         }]
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
-    extracted_data = extract_from_query(user_query)
-    category = extracted_data.get("category", context_params.get("category", ""))
-    source = extracted_data.get("source", "")  # 不從 context 中讀取 source，讓它不被保存
-    action = extracted_data.get("action", "")
+    extracted = extract_from_query(user_query)
+    category = extracted.get("category", context_params.get("category", ""))
+    source = extracted.get("source", context_params.get("source", ""))
+    action = extracted.get("action", "")
 
-
+    # 檢查是否成功提取 category 和 source
+    if not category or not source:
+        # 如果 category 或 source 不完整，則提示用戶選擇
+        if not category:
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
+                "outputContexts": output_context({})
+            })
+        elif not source:
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
+                "outputContexts": output_context({"category": category})
+            })
 
     # 主邏輯處理
     if action or any(keyword in user_query for keyword in ["規範", "資料", "標準圖"]):
