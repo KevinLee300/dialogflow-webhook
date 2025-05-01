@@ -271,7 +271,7 @@ def webhook():
     if any(k in user_query for k in keywords):
         if not category:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查管支撐", "查油漆", "查鋼構", "查保溫"])],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
