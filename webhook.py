@@ -307,14 +307,14 @@ def webhook():
             return jsonify({
                 "fulfillmentMessages": [
                     payload_with_buttons(
-                        f"{category}（{user_query}）：請選擇下一步",
-                        [f"下載{category}（{user_query}）", "詢問內容"]
+                        f"{matched_category}（{user_query}）：請選擇下一步",
+                        [f"下載{matched_category}（{user_query}）", "詢問內容"]
                     )
                 ],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": {"category": category, "source": source}
+                    "parameters": {"category": matched_category, "source": source}
                 }]
             })
 
