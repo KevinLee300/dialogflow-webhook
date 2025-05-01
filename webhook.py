@@ -280,7 +280,7 @@ def webhook():
     if any(k in user_query for k in keywords):
         if not category:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查詢管支撐規範", "查詢油漆規範", "查詢鋼構規範", "查詢保溫規範"])],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
@@ -312,8 +312,8 @@ def webhook():
             })
     if user_query in category:
         return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{user_query}：請選擇來源類型", sources)],
-            "outputContexts": [output_context({"category": user_query, "source": ""})]
+            "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", sources)],
+            "outputContexts": [output_context({"category": category, "source": ""})]
         })
 
     if user_query in ["企業", "塑化"]:
