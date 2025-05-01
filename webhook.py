@@ -117,7 +117,7 @@ def query_download_link(category, source):
         ("保溫", "企業"): "https://tinyurl.com/2s4cb5cn"
     }
     return links.get((category, source), "查無對應的下載連結")
-
+""" 
 def extract_from_query(text):
     categories = ["管支撐", "油漆", "鋼構", "保溫"]
     sources = ["企業", "塑化"]
@@ -163,7 +163,31 @@ def extract_from_query(text):
             extracted["action"] = mapped
             break
 
-    return extracted
+    return extracted """
+
+def extract_from_query(text):
+    categories = ["管支撐", "油漆"]
+    sources = ["企業", "塑化"]
+    actions_map = {
+        "查詢": "詢問內容",
+        "查": "詢問內容",
+        "詢問": "詢問內容",
+        "下載": "下載",
+        "給我": "下載"
+    }
+
+    found = {}
+    for c in categories:
+        if c in text:
+            found["category"] = c
+    for s in sources:
+        if s in text:
+            found["source"] = s
+    for keyword, action in actions_map.items():
+        if keyword in text:
+            found["action"] = action
+            break
+    return found
 
 
 @app.route("/webhook", methods=["POST"])
