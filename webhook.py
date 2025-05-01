@@ -273,7 +273,7 @@ def webhook():
         link = query_download_link(category, source)
         return jsonify({
             "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-            "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
+            "outputContexts": output_context({"category": "", "source": ""})  # 清除 source
         })
 
     keywords = {"規範", "資料", "標準圖"}
