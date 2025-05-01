@@ -275,9 +275,17 @@ def webhook():
             "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
         })
 
+    if user_query in category:
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons(f"{user_query}：請選擇來源類型", ["企業", "塑化"])],
+            "outputContexts": [output_context({"category": user_query})]
+        })
+
+
     keywords = {"規範", "資料", "標準圖"}
     if any(k in user_query for k in keywords):
-        if not category:
+        matched_category = next((c for c in category if c in user_query), "")
+        if not matched_category:
             return jsonify({
                 "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": [{
@@ -288,11 +296,11 @@ def webhook():
             })
         elif not source:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
+                "fulfillmentMessages": [payload_with_buttons(f"{matched_category}：請選擇來源類型", ["企業", "塑化"])],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": {"category": category}
+                    "parameters": {"category": matched_category}
                 }]
             })
         else:
