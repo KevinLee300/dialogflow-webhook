@@ -198,10 +198,11 @@ def extract_from_query(text):
         if s in text:
             found["source"] = s
             break
-    for keyword, action in actions_map.items():
-        if keyword in text:
-            found["action"] = action
-            break
+    if any(word in text for word in action_keywords["下載"]):
+        found["action"] = "下載"
+    elif any(word in text for word in action_keywords["詢問內容"]):
+        found["action"] = "詢問內容"
+        
     return found
 
 
