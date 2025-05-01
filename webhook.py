@@ -291,7 +291,7 @@ def webhook():
             "fulfillmentMessages": [
                 payload_with_buttons(
                     f"{category}（{user_query}）：請選擇下一步",
-                    ["下載", f"{category}（{user_query}）", "詢問內容"]
+                    [f"下載{category}（{user_query}）", "詢問內容"]
                 )
             ],
             "outputContexts": [{
