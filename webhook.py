@@ -169,7 +169,7 @@ def extract_from_query(text):
     
     extracted = {"category": "", "source": "", "action": ""}
 
-    categories = ["管支撐", "油漆", "鋼構", "保溫"]
+    categories = ["管支撐", "油漆",]
     sources = ["企業", "塑化"]
     actions_map = {
         "查詢": "詢問內容",
