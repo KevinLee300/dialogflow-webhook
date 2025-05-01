@@ -253,7 +253,10 @@ def webhook():
     # ✅ 加入自動下載條件
     if action == "下載" and category and source:
         link = query_download_link(category, source)
-        return jsonify({"fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"})
+        return jsonify({
+            "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
+            "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
+        })
 
 
     keywords = {"規範", "資料", "標準圖"}
@@ -278,7 +281,12 @@ def webhook():
             })
         else:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])],
+                "fulfillmentMessages": [
+                    payload_with_buttons(
+                        f"{category}（{user_query}）：請選擇下一步",
+                        [f"下載{category}（{user_query}）", "詢問內容"]
+                    )
+                ],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
@@ -305,11 +313,16 @@ def webhook():
     # ✅ 使用者單獨輸入「下載」時
     if user_query == "下載" and category and source:
         return jsonify({
-            "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{query_download_link(category, source)}"
+            "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
+            "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
         })
 
     if user_query == "詢問內容":
-        return jsonify({"fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。"})
+        # 清除 source
+        return jsonify({
+            "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
+            "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
+        })
 
     if intent == "Default Fallback Intent":
         spec_summary, matched_titles, total_matches = search_piping_spec(user_query)
