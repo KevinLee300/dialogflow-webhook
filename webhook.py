@@ -193,10 +193,16 @@ def extract_from_query(text):
         if keyword in text:
             found["category"] = category
             break
-    for s in sources:
-        if s in text:
-            found["source"] = s
-            break
+        
+    # 如果是保溫 → 強制指定來源為企業
+    if found["category"] == "保溫":
+        found["source"] = "企業"
+    else:
+        for src in sources:
+            if src in text:
+                found["source"] = src
+                break
+
     for keyword, action in actions_map.items():
         if keyword in text:
             found["action"] = action
