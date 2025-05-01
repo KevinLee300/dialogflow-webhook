@@ -166,10 +166,7 @@ def extract_from_query(text):
     return extracted """
 
 def extract_from_query(text):
-    
-    extracted = {"category": "", "source": "", "action": ""}
-
-    categories = ["管支撐", "油漆",]
+    categories = ["管支撐", "油漆", "鋼構", "保溫"]
     sources = ["企業", "塑化"]
     actions_map = {
         "查詢": "詢問內容",
@@ -185,22 +182,14 @@ def extract_from_query(text):
     for c in categories:
         if c in text:
             found["category"] = c
-
-
-    # 檢查是否有匹配的 source，且保溫類別只會選擇企業
-    if extracted["category"] == "保溫":
-        extracted["source"] = "企業"
-    else:
-        for src in sources:
-            if src in text:
-                extracted["source"] = src
-                break
-
+    for s in sources:
+        if s in text:
+            found["source"] = s
     for keyword, action in actions_map.items():
         if keyword in text:
-            extracted["action"] = action
+            found["action"] = action
             break
-    return extracted
+    return found
 
 
 @app.route("/webhook", methods=["POST"])
@@ -262,13 +251,12 @@ def webhook():
         context_params = {}  # 清空上下文參數
         
     # ✅ 加入自動下載條件
-    if (action == "下載" or user_query == "下載") and category and source:
+    if action == "下載" and category and source:
         link = query_download_link(category, source)
         return jsonify({
             "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
             "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
         })
-
 
     keywords = {"規範", "資料", "標準圖"}
     if any(k in user_query for k in keywords):
