@@ -166,14 +166,16 @@ def extract_from_query(text):
     return extracted """
 
 def extract_from_query(text):
-    categories = ["管支撐", "油漆"]
+    categories = ["管支撐", "油漆", "鋼構", "保溫"]
     sources = ["企業", "塑化"]
     actions_map = {
         "查詢": "詢問內容",
         "查": "詢問內容",
         "詢問": "詢問內容",
+        "找": "詢問內容",
         "下載": "下載",
-        "給我": "下載"
+        "給我": "下載",
+        "提供": "下載",
     }
 
     found = {}
@@ -258,7 +260,7 @@ def webhook():
     if any(k in user_query for k in keywords):
         if not category:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
