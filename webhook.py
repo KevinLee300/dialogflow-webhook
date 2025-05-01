@@ -193,7 +193,6 @@ def extract_from_query(text):
         if keyword in text:
             found["category"] = category
             break
-        
     # 如果是保溫 → 強制指定來源為企業
     if found["category"] == "保溫":
         found["source"] = "企業"
@@ -234,9 +233,9 @@ def webhook():
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
     extracted_data = extract_from_query(user_query)
-    category = extracted_data.get("category") or context_params.get("category", "")
-    source = extracted_data.get("source") or context_params.get("source", "")
-    action = extracted_data.get("action")
+    category = extracted_data.get("category", context_params.get("category", ""))
+    source = extracted_data.get("source", context_params.get("source", ""))
+    action = extracted_data.get("action", "")
 
     print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
 
@@ -273,18 +272,18 @@ def webhook():
         link = query_download_link(category, source)
         return jsonify({
             "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-            "outputContexts": output_context({"category": "", "source": ""})  # 清除 source
+            "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
         })
 
     keywords = {"規範", "資料", "標準圖"}
     if any(k in user_query for k in keywords):
         if not category:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查詢管支撐規範", "查詢油漆規範", "查詢鋼構規範", "查詢保溫規範"])],
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": {"category": "", "source": ""}
+                    "parameters": {}
                 }]
             })
         elif not source:
@@ -310,15 +309,11 @@ def webhook():
                     "parameters": {"category": category, "source": source}
                 }]
             })
-    if user_query in ["管支撐", "油漆", "鋼構", "保溫"]:
-        return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{user_query}：請選擇來源類型", sources)],
-            "outputContexts": [output_context({"category": user_query, "source": ""})]
-        })
 
     if user_query in ["企業", "塑化"]:
         # 嘗試記得前一步選的 category（優先從 context）
         remembered_category = context_params.get("category", "")
+
         if remembered_category:
             return jsonify({
                 "fulfillmentMessages": [
@@ -381,8 +376,8 @@ def webhook():
     # 如果不是 Default Fallback Intent，執行其他邏輯
 
     return jsonify({
-        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐規範", "查詢油漆規範", "查詢鋼構規範", "查詢保溫規範"])],
-        "outputContexts": output_context({"category": "", "source": ""})
+        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["管支撐", "油漆", "鋼構", "保溫"])],
+        "outputContexts": output_context({})
     })
 
 if __name__ == "__main__":
