@@ -267,7 +267,7 @@ def webhook():
             "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
         })
 
-    keywords = {"規範", "資料", "標準圖"}
+    keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
     if any(k in user_query for k in keywords):
         if not category:
             return jsonify({
