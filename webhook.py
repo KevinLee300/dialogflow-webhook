@@ -318,6 +318,7 @@ def webhook():
             })
 
     if user_query in ["企業", "塑化"] and category:
+        source = user_query  # 更新 source
         return jsonify({
             "fulfillmentMessages": [
                 payload_with_buttons(
