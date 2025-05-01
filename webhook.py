@@ -202,7 +202,7 @@ def extract_from_query(text):
         found["action"] = "下載"
     elif any(word in text for word in action_keywords["詢問內容"]):
         found["action"] = "詢問內容"
-        
+
     return found
 
 
@@ -277,7 +277,7 @@ def webhook():
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": {}
+                    "parameters": {"source": source, "action": action}
                 }]
             })
         elif not source:
@@ -286,7 +286,7 @@ def webhook():
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": {"category": category}
+                    "parameters": {"category": category, "action": action}
                 }]
             })
         else:
