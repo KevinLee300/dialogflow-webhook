@@ -286,13 +286,18 @@ def webhook():
 
     if user_query in ["企業", "塑化"] and category:
         return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
+            "fulfillmentMessages": [
+                payload_with_buttons(
+                    f"{category}（{user_query}）：請選擇下一步",
+                    ["下載", f"{category}（{user_query}）", "詢問內容"]
+                )
+            ],
             "outputContexts": [{
                 "name": f"{session}/contexts/spec-context",
                 "lifespanCount": 5,
                 "parameters": {"category": category, "source": user_query}
             }]
-        })     
+        })    
 
 
     # ✅ 使用者單獨輸入「下載」時
