@@ -166,7 +166,14 @@ def extract_from_query(text):
     return extracted """
 
 def extract_from_query(text):
-    categories = ["管支撐", "油漆", "鋼構", "保溫"]
+    # 定義 categories_map，類似 actions_map 的結構
+    categories_map = {
+        "管支撐": ["管支撐", "支撐", "管道支撐", "TYPE"],
+        "油漆": ["油漆", "塗裝", "漆", "涂料", "painting"],
+        "保溫": ["保溫", "隔熱", "熱保", "隔熱保溫"],
+        "鋼構": ["鋼構", "鋼結構", "結構鋼", "鋼架", "結構", "結構體", "鋼板", "鋼鐵板", "鋼梁", "鋼樑", "鋼結構規範", "鋼構規範", "結構設計規範"],
+    }
+    
     sources = ["企業", "塑化"]
     actions_map = {
         "查詢": "詢問內容",
@@ -178,10 +185,12 @@ def extract_from_query(text):
         "提供": "下載",
     }
 
-    found = {}
-    for c in categories:
-        if c in text:
-            found["category"] = c
+    found = {"category": "", "source": "", "action": ""}
+    # 檢查是否有匹配的 category
+    for category, keywords in categories_map.items():
+        if any(keyword in text for keyword in keywords):
+            found["category"] = category
+            break
     for s in sources:
         if s in text:
             found["source"] = s
