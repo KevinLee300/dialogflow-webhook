@@ -165,56 +165,38 @@ def extract_from_query(text):
 
     return extracted """
 
-def extract_from_query(text):
     # 定義 categories_map，類似 actions_map 的結構
-    categories_map = {
-        "管支撐": "管支撐",
-        "支撐" : "管支撐", 
-        "管道支撐": "管支撐",
-        "油漆":"油漆",
-        "塗裝":"油漆",
-        "漆":"油漆",
-        "涂料":"油漆",
-        "painting":"油漆",
-        "保溫":"保溫" ,
-        "隔熱":"保溫" ,
-        "熱保":"保溫" ,
-        "隔熱保溫":"保溫" ,
-        "鋼構":"鋼構" ,
-        "鋼結構":"鋼構" ,
-        "結構鋼":"鋼構" ,
-        "鋼架":"鋼構" ,
-        "結構":"鋼構" ,
-        "結構體":"鋼構" ,
-        "鋼板":"鋼構" ,
-        "鋼鐵板":"鋼構" ,
-        "鋼梁":"鋼構" ,
-        "鋼樑":"鋼構" ,
-        "鋼結構規範":"鋼構" ,
-        "鋼構規範":"鋼構" ,
-        "結構設計規範":"鋼構" ,
-    }
-    
-    sources = ["企業", "塑化"]
-    actions_map = {
-        "查詢": "詢問內容",
-        "查": "詢問內容",
-        "詢問": "詢問內容",
-        "找": "詢問內容",
-        "下載": "下載",
-        "給我": "下載",
-        "提供": "下載",
-    }
+category_keywords = {
+        "管支撐": ["管支撐", "支撐", "管道支撐"],
+        "油漆": ["油漆", "塗裝", "漆", "涂料", "painting"],
+        "保溫": ["保溫", "隔熱", "熱保", "隔熱保溫"],
+        "鋼構": ["鋼構", "鋼結構", "結構鋼", "鋼架", "結構", "結構體",
+            "鋼板", "鋼鐵板", "鋼梁", "鋼樑", "鋼結構規範", "鋼構規範", "結構設計規範"],
+    } 
 
+action_keywords = {
+    "詢問內容": ["查詢", "查", "詢問", "找"],
+    "下載": ["下載", "給我", "提供"],
+}
+
+
+sources = ["企業", "塑化"]
+
+categories_map = {k: v for v, keys in category_keywords.items() for k in keys}
+actions_map = {k: v for v, keys in action_keywords.items() for k in keys}
+
+def extract_from_query(text):
     found = {"category": "", "source": "", "action": ""}
-    # 檢查是否有匹配的 category
-    for category, keywords in categories_map.items():
-        if any(keyword in text for keyword in keywords):
+
+        # 檢查是否有匹配的 category
+    for keyword, category in categories_map.items():
+        if keyword in text:
             found["category"] = category
             break
     for s in sources:
         if s in text:
             found["source"] = s
+            break
     for keyword, action in actions_map.items():
         if keyword in text:
             found["action"] = action
