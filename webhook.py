@@ -166,8 +166,21 @@ def extract_from_query(text):
     return extracted """
 
 def extract_from_query(text):
-    categories = ["管支撐", "油漆", "鋼構", "保溫"]
+    # 初始化返回結果    
+    extracted = {"category": "", "source": "", "action": ""}
+
+    # 定義 category_keywords
+    category_keywords = {
+        "管支撐": ["管支撐", "支撐", "管道支撐", "TYPE"],
+        "油漆": ["油漆", "塗裝", "漆", "涂料", "painting"],
+        "保溫": ["保溫", "隔熱", "熱保", "隔熱保溫"],
+        "鋼構": ["鋼構", "鋼結構", "結構鋼", "鋼架", "結構", "結構體", "鋼板", "鋼鐵板", "鋼梁", "鋼樑", "鋼結構規範", "鋼構規範", "結構設計規範"],
+    }
+
+    # 定義 sources
     sources = ["企業", "塑化"]
+
+    # 定義 actions_map
     actions_map = {
         "查詢": "詢問內容",
         "查": "詢問內容",
@@ -178,18 +191,28 @@ def extract_from_query(text):
         "提供": "下載",
     }
 
-    found = {}
-    for c in categories:
-        if c in text:
-            found["category"] = c
-    for s in sources:
-        if s in text:
-            found["source"] = s
+    # 檢查是否有匹配的 category
+    for category, keywords in category_keywords.items():
+        if any(keyword in text for keyword in keywords):
+            extracted["category"] = category
+            break
+
+    # 檢查是否有匹配的 source，且保溫類別只會選擇企業
+    if extracted["category"] == "保溫":
+        extracted["source"] = "企業"
+    else:
+        for src in sources:
+            if src in text:
+                extracted["source"] = src
+                break
+
+    # 檢查是否有匹配的 action
     for keyword, action in actions_map.items():
         if keyword in text:
-            found["action"] = action
+            extracted["action"] = action
             break
-    return found
+
+    return extracted
 
 
 @app.route("/webhook", methods=["POST"])
