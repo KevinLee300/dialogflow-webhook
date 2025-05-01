@@ -234,9 +234,9 @@ def webhook():
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
     extracted_data = extract_from_query(user_query)
-    category = extracted_data.get("category", context_params.get("category", ""))
-    source = extracted_data.get("source", context_params.get("source", ""))
-    action = extracted_data.get("action", "")
+    category = extracted_data.get("category") or context_params.get("category", "")
+    source = extracted_data.get("source") or context_params.get("source", "")
+    action = extracted_data.get("action") or context_params.get("action", "")
 
     print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
 
@@ -284,7 +284,7 @@ def webhook():
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": {}
+                    "parameters": {"category": user_query}
                 }]
             })
         elif not source:
