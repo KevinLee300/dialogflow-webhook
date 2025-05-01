@@ -193,15 +193,10 @@ def extract_from_query(text):
         if keyword in text:
             found["category"] = category
             break
-    # 如果是保溫 → 強制指定來源為企業
-    if found["category"] == "保溫":
-        found["source"] = "企業"
-    else:
-        for src in sources:
-            if src in text:
-                found["source"] = src
-                break
-
+    for s in sources:
+        if s in text:
+            found["source"] = s
+            break
     for keyword, action in actions_map.items():
         if keyword in text:
             found["action"] = action
@@ -263,9 +258,6 @@ def webhook():
                 "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
             })
         
-            # 如果提問者輸入的問題與之前的上下文無關，清空 source 和 action
-    if not category and not source and not action:
-        context_params = {}  # 清空上下文參數
         
     # ✅ 加入自動下載條件
     if action == "下載" and category and source:
@@ -275,17 +267,9 @@ def webhook():
             "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
         })
 
-    if user_query in category:
-        return jsonify({
-            "fulfillmentMessages": [payload_with_buttons(f"{user_query}：請選擇來源類型", ["企業", "塑化"])],
-            "outputContexts": [output_context({"category": user_query})]
-        })
-
-
     keywords = {"規範", "資料", "標準圖"}
     if any(k in user_query for k in keywords):
-        matched_category = next((c for c in category if c in user_query), "")
-        if not matched_category:
+        if not category:
             return jsonify({
                 "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                 "outputContexts": [{
@@ -296,25 +280,25 @@ def webhook():
             })
         elif not source:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{matched_category}：請選擇來源類型", ["企業", "塑化"])],
+                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": {"category": matched_category}
+                    "parameters": {"category": category}
                 }]
             })
         else:
             return jsonify({
                 "fulfillmentMessages": [
                     payload_with_buttons(
-                        f"{matched_category}（{user_query}）：請選擇下一步",
-                        [f"下載{matched_category}（{user_query}）", "詢問內容"]
+                        f"{category}（{user_query}）：請選擇下一步",
+                        [f"下載{category}（{user_query}）", "詢問內容"]
                     )
                 ],
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": {"category": matched_category, "source": source}
+                    "parameters": {"category": category, "source": source}
                 }]
             })
 
