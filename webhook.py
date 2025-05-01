@@ -382,8 +382,8 @@ def webhook():
     # 如果不是 Default Fallback Intent，執行其他邏輯
 
     return jsonify({
-        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["管支撐", "油漆", "鋼構", "保溫"])],
-        "outputContexts": output_context({})
+        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐規範", "查詢油漆規範", "查詢鋼構規範", "查詢保溫規範"])],
+        "outputContexts": output_context({"category": "", "source": ""})
     })
 
 if __name__ == "__main__":
