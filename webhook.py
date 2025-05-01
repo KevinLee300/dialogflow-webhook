@@ -305,20 +305,30 @@ def webhook():
                 }]
             })
 
-    if user_query in ["企業", "塑化"] and category:
-        return jsonify({
-            "fulfillmentMessages": [
-                payload_with_buttons(
-                    f"{category}（{user_query}）：請選擇下一步",
-                    [f"下載{category}（{user_query}）", "詢問內容"]
-                )
-            ],
-            "outputContexts": [{
-                "name": f"{session}/contexts/spec-context",
-                "lifespanCount": 5,
-                "parameters": {"category": category, "source": user_query}
-            }]
-        })    
+    if user_query in ["企業", "塑化"]:
+        # 嘗試記得前一步選的 category（優先從 context）
+        remembered_category = context_params.get("category", "")
+
+        if remembered_category:
+            return jsonify({
+                "fulfillmentMessages": [
+                    payload_with_buttons(
+                        f"{remembered_category}（{user_query}）：請選擇下一步",
+                        [f"下載{remembered_category}（{user_query}）", "詢問內容"]
+                    )
+                ],
+                "outputContexts": [{
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {"category": remembered_category, "source": user_query}
+                }]
+            })
+        else:
+            # 🔁 沒有記住前面的類別，跳回「請選擇規範類別」
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
+                "outputContexts": output_context({"source": user_query})  # 暫存 source
+            })
 
 
     if user_query == "詢問內容":
