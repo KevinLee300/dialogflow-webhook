@@ -261,14 +261,6 @@ def webhook():
             })
         
         
-    # ✅ 加入自動下載條件
-    if action == "下載" and category and source:
-        link = query_download_link(category, source)
-        return jsonify({
-            "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-            "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
-        })
-
     keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
     if any(k in user_query for k in keywords):
         if not category:
@@ -288,6 +280,11 @@ def webhook():
                     "lifespanCount": 5,
                     "parameters": {"category": category, "action": action}
                 }]
+            })
+        elif action == "下載":
+            link = query_download_link(category, source)
+            return jsonify({
+                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"
             })
         else:
             return jsonify({
@@ -329,6 +326,13 @@ def webhook():
                 "outputContexts": output_context({"source": user_query})  # 暫存 source
             })
 
+    # ✅ 加入自動下載條件
+    if action == "下載" and category and source:
+        link = query_download_link(category, source)
+        return jsonify({
+            "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
+            "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
+        })
 
     if user_query == "詢問內容":
         # 清除 source
