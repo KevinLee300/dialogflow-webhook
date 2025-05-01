@@ -310,6 +310,11 @@ def webhook():
                     "parameters": {"category": category, "source": source}
                 }]
             })
+    if user_query in category:
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons(f"{user_query}：請選擇來源類型", sources)],
+            "outputContexts": [output_context({"category": user_query, "source": ""})]
+        })
 
     if user_query in ["企業", "塑化"]:
         # 嘗試記得前一步選的 category（優先從 context）
