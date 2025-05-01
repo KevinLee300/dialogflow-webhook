@@ -189,10 +189,10 @@ def webhook():
 
 
     # 統一取得參數：優先從 query 抽出，否則使用 context 中值
-    extracted = extract_from_query(user_query)  # 自定義的 NLP 擷取函數
-    source = extracted.get("source", "")
-    category = extracted.get("category", "")
-    action = extracted.get("action", "")
+    extracted_data = extract_from_query(user_query)
+    category = extracted_data.get("category", context_params.get("category", ""))
+    source = extracted_data.get("source", context_params.get("source", ""))
+    action = extracted_data.get("action", "")
 
     print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
 
@@ -224,50 +224,52 @@ def webhook():
     if not category and not source and not action:
         context_params = {}  # 清空上下文參數
         
-# ✅ 使用者輸入的是來源（企業／塑化），且 context 已有 category       
-    if user_query in ["企業", "塑化"]:
-        if category:
-            source = user_query
-            return jsonify({
-                "fulfillmentMessages": [
-                    payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])
-                ],
-                "outputContexts": output_context({"category": category, "source": source})
-            })
-        else:
-            return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
-                "outputContexts": output_context({})
-            })
+    # ✅ 加入自動下載條件
+    if action == "下載" and category and source:
+        link = query_download_link(category, source)
+        return jsonify({"fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"})
 
-# ✅ 尚未選來源
-    if not source:
+
+    keywords = {"規範", "資料", "標準圖"}
+    if any(k in user_query for k in keywords):
         if not category:
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
-                "outputContexts": output_context({})
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆"])],
+                "outputContexts": [{
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {}
+                }]
+            })
+        elif not source:
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
+                "outputContexts": [{
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {"category": category}
+                }]
             })
         else:
-            source_options = ["企業"] if category == "保溫" else ["企業", "塑化"]
             return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", source_options)],
-                "outputContexts": output_context({"category": category})
+                "fulfillmentMessages": [payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])],
+                "outputContexts": [{
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {"category": category, "source": source}
+                }]
             })
 
-        
-    # ✅ 處理使用者想下載或詢問內容
-    if action or any(k in user_query for k in ["規範", "資料", "標準圖"]):
-        if action == "下載":
-            return jsonify({
-                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{query_download_link(category, source)}"
-            })
-        else:
-            return jsonify({
-                "fulfillmentMessages": [
-                    payload_with_buttons(f"{category}（{source}）：請選擇下一步", ["下載", "詢問內容"])
-                ],
-                "outputContexts": output_context({"category": category, "source": source})
-            })
+    if user_query in ["企業", "塑化"] and category:
+        return jsonify({
+            "fulfillmentMessages": [payload_with_buttons(f"{category}（{user_query}）：請選擇下一步", ["下載", "詢問內容"])],
+            "outputContexts": [{
+                "name": f"{session}/contexts/spec-context",
+                "lifespanCount": 5,
+                "parameters": {"category": category, "source": user_query}
+            }]
+        })     
+
 
     # ✅ 使用者單獨輸入「下載」時
     if user_query == "下載" and category and source:
