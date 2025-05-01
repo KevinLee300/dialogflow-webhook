@@ -254,7 +254,7 @@ def webhook():
     if action == "下載" and category and source:
         link = query_download_link(category, source)
         return jsonify({
-            "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
+            "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
             "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
         })
 
