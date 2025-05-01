@@ -284,7 +284,7 @@ def webhook():
                 "outputContexts": [{
                     "name": f"{session}/contexts/spec-context",
                     "lifespanCount": 5,
-                    "parameters": context_params
+                    "parameters": {"category": "", "source": ""}
                 }]
             })
         elif not source:
