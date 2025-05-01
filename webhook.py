@@ -115,6 +115,7 @@ def query_download_link(category, source):
         ("鋼構", "塑化"): "https://tinyurl.com/3tdcxe5v",
         ("鋼構", "企業"): "https://tinyurl.com/mvb9yzhw",
         ("保溫", "企業"): "https://tinyurl.com/2s4cb5cn"
+        ("保溫", "塑化"): "保溫規範請參考企業規範\nhttps://tinyurl.com/2s4cb5cn"
     }
     return links.get((category, source), "查無對應的下載連結")
 """ 
