@@ -196,9 +196,9 @@ def webhook():
 
     print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
 
-    if re.search(r"(?:TY(?:PE)?)[-\s]*\d{1,3}[A-Z]?", user_query.upper()):
-        category = "管支撐"
-        source = "塑化"
+    #if re.search(r"(?:TY(?:PE)?)[-\s]*\d{1,3}[A-Z]?", user_query.upper()):
+        #category = "管支撐"
+        #source = "塑化"
     
     # 檢查是否提到 TYPE 編號
     match = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
