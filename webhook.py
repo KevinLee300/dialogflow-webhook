@@ -251,7 +251,7 @@ def webhook():
         context_params = {}  # 清空上下文參數
         
     # ✅ 加入自動下載條件
-    if action == "下載" and category and source:
+    if (action == "下載" or user_query == "下載") and category and source:
         link = query_download_link(category, source)
         return jsonify({
             "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
@@ -309,13 +309,6 @@ def webhook():
             }]
         })    
 
-
-    # ✅ 使用者單獨輸入「下載」時
-    if user_query == "下載" and category and source:
-        return jsonify({
-            "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-            "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
-        })
 
     if user_query == "詢問內容":
         # 清除 source
