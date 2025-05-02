@@ -213,8 +213,7 @@ def webhook():
                 "lifespanCount": 5,
                 "parameters": params
             }] 
-
-
+        
     if intent == "詢問熱處理規範":
         # 設置 await_heat_question 到上下文
         spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
@@ -293,7 +292,7 @@ def webhook():
                 })
 
         if user_query in ["企業", "塑化"]:
-            # 嘗試記得前一步選的 category（優先從 context）
+    # 嘗試記得前一步選的 category（優先從 context）
             remembered_category = context_params.get("category", "")
 
             if remembered_category:
@@ -340,6 +339,14 @@ def webhook():
         if context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
             return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+        
+        # 檢查是否有 category 和 source
+        if context_params.get("category") and context_params.get("source"):
+            category = context_params["category"]
+            source = context_params["source"]
+            return jsonify({
+                "fulfillmentText": f"您選擇的類別是 {category}，來源是 {source}，請問您需要什麼幫助？"
+            })
         
         # 🧠 其他 fallback 邏輯（例如配管共同規範）
         return generate_spec_reply(user_query, piping_specification, "詢問配管共同規範")
