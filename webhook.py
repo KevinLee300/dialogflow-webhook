@@ -207,12 +207,12 @@ def webhook():
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
-        def output_context(params):
-            return [{
-                "name": f"{session}/contexts/spec-context",
-                "lifespanCount": 5,
-                "parameters": params
-            }] 
+    def output_context(params):
+        return [{
+            "name": f"{session}/contexts/spec-context",
+            "lifespanCount": 5,
+            "parameters": params
+        }] 
         
     if intent == "詢問熱處理規範":
         # 設置 await_heat_question 到上下文
@@ -290,15 +290,6 @@ def webhook():
                         "parameters": {"category": category, "source": source}
                     }]  
                 })
-        if not category:
-            return jsonify({
-                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查管支撐", "查油漆", "查鋼構", "查保溫"])],
-                "outputContexts": [{
-                    "name": f"{session}/contexts/spec-context",
-                    "lifespanCount": 5,
-                    "parameters": {"source": source, "action": action}
-            }]
-        }) 
 
         if not source:
             return jsonify({
