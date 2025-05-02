@@ -206,6 +206,7 @@ def webhook():
     for context in query_result.get("outputContexts", []):
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
+            context_params["original_query"] = user_query
 
     def output_context(params):
         return [{
