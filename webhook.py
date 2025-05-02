@@ -188,16 +188,10 @@ def webhook():
     session = req.get("session", "")
     intent = req.get("queryResult", {}).get("intent", {}).get("displayName", "")
 
-    context_name = find_active_context(query_result, ["await_heat_question"])
-
 
     if intent == "Default Fallback Intent":
-        reply_map = {
-        "await_heat_question": piping_heat_treatment,
-        "await_paint_question": painting_spec,
-        }
-        return generate_spec_reply(user_query, reply_map[context_name], f"詢問{context_name}內容")
-        #return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範")        
+
+        return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範")        
 
     elif intent == "查詢規範2":
         # 讀取 context 中的參數
