@@ -215,6 +215,9 @@ def webhook():
             }] 
 
 
+    if intent == "詢問熱處理規範":
+        return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範") 
+    elif intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
         category = extracted_data.get("category", context_params.get("category", ""))
@@ -327,9 +330,6 @@ def webhook():
         "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐", "查詢油漆", "查詢鋼構", "查詢保溫"])],
         "outputContexts": output_context({})
     })
-
-    if intent == "詢問熱處理規範":
-        return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範") 
     elif intent == "Default Fallback Intent":
         return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範") 
     else:  # fallback
