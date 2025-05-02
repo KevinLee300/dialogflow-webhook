@@ -25,43 +25,31 @@ except UnicodeDecodeError as e:
 # 載入配管試壓規範 JSON
 try:
     with open("piping_specification.json", "r", encoding="utf-8") as f:
-        piping_spec = json.load(f)
+        piping_specification = json.load(f)
 except FileNotFoundError:
     piping_specification = {}
-    print("❌ 無法找到配管試壓規範的 JSON 檔案。")
+    print("❌ 無法找到配管規範 JSON 檔案。")
 
-def search_piping_spec(question):
-    # 清理輸入問題，去除空格並轉換為小寫
+try:
+    with open("piping_heat_treatment.json", "r", encoding="utf-8") as f:
+        piping_heat_treatment = json.load(f)
+except FileNotFoundError:
+    piping_heat_treatment = {}
+    print("❌ 無法找到熱處理規範 JSON 檔案。")
+
+def search_piping_spec(question, spec_data, keywords):
     question_cleaned = re.sub(r"\s+", "", question).lower()
     
-    # 定義關鍵字
-    cleaning_keywords = ["化學清洗", "化學處理"]
-    pressure_test_keywords = ["水壓測試", "氣壓測試" ]
-
-    # 根據問題選擇關鍵字
-    if "清洗" in question_cleaned or "去污" in question_cleaned:
-        keywords = cleaning_keywords
-    elif "測試" in question_cleaned or "壓力" in question_cleaned:
-        keywords = pressure_test_keywords
-    else:
-        keywords = [question_cleaned]  # 使用問題本身作為關鍵字
-
-    # 儲存匹配的章節與子章節
     matched_sections = []
     matched_titles = []
     total_matches = 0
 
-    for chapter, data in piping_spec.items():
+    for chapter, data in spec_data.items():
         title = data.get("title", "")
         content = data.get("content", {})
-        
-        chapter_matched = False
 
-        # 優先比對章節標題
-        if any(keyword in title.lower() for keyword in keywords):
-            chapter_matched = True
+        chapter_matched = any(keyword in title.lower() for keyword in keywords)
 
-        # 如果章節標題沒有命中，再檢查子章節
         if not chapter_matched:
             for sec_num, sec_text in content.items():
                 sec_text_clean = re.sub(r"\s+", "", sec_text).lower()
@@ -69,7 +57,6 @@ def search_piping_spec(question):
                     chapter_matched = True
                     break
 
-        # 如果有命中
         if chapter_matched:
             matched_sections.append(f"第{chapter}章 {title}")
             matched_titles.append(f"第{chapter}章 {title}")
@@ -83,10 +70,43 @@ def search_piping_spec(question):
 
     if matched_sections:
         summary = "\n".join(matched_sections)
-        # 不砍掉，回傳完整，讓上層決定要不要切分
         return summary, matched_titles, total_matches
 
     return "", [], 0
+
+def generate_spec_reply(user_query, spec_data, spec_type_desc):
+    keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}  # 定義關鍵字
+    summary, matched_titles, total_matches = search_piping_spec(user_query, spec_data, keywords)
+
+    if total_matches > 0:
+        if len(summary) > 500:
+            reply = f"根據《{spec_type_desc}》，找到相關內容（已截取）：\n{summary[:500]}...\n🔔 內容過長，請查閱完整規範。"
+        else:
+            reply = f"根據《{spec_type_desc}》，找到相關內容：\n{summary}"
+    else:
+        try:
+            print("🔍 呼叫 GPT 回答...")
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
+                    {"role": "user", "content": user_query}
+                ],
+                max_tokens=500,
+                temperature=0.2,
+                top_p=0.8
+            )
+            reply = response.choices[0].message.content.strip()
+        except Exception as e:
+            print("❌ GPT 呼叫失敗:", e)
+            reply = "抱歉，目前無法處理您的請求，請稍後再試。"
+
+    return jsonify({
+        "fulfillmentText": reply
+    })
+
+
+
 
 #LINE 按鈕程式
 def payload_with_buttons(text, options):    
@@ -118,53 +138,6 @@ def query_download_link(category, source):
         ("保溫", "塑化"): "保溫規範請參考企業規範\nhttps://tinyurl.com/2s4cb5cn"
     }
     return links.get((category, source), "查無對應的下載連結")
-""" 
-def extract_from_query(text):
-    categories = ["管支撐", "油漆", "鋼構", "保溫"]
-    sources = ["企業", "塑化"]
-
-    category_keywords = {
-        "管支撐": ["管支撐", "支撐", "管道支撐", "TYPE"],
-        "油漆": ["油漆", "塗裝", "漆", "涂料", "painting"],
-        "保溫": ["保溫", "隔熱", "熱保", "隔熱保溫"],
-        "鋼構": ["鋼構", "鋼結構", "結構鋼", "鋼架", "結構", "結構體", "鋼板", "鋼鐵板", "鋼梁", "鋼樑", "鋼結構規範", "鋼構規範", "結構設計規範"],
-    }
-
-    actions_map = {
-        "查詢": "詢問內容",
-        "查": "詢問內容",
-        "詢問": "詢問內容",
-        "找": "詢問內容",
-        "下載": "下載",
-        "給我": "下載",
-        "提供": "下載",
-    }
-
-    # 初始化返回結果
-    extracted = {"category": "", "source": "", "action": ""}
-
-    # 檢查是否有匹配的 category
-    for category, keywords in category_keywords.items():
-        if any(keyword in text for keyword in keywords):
-            extracted["category"] = category
-            break
-
-    # 檢查是否有匹配的 source，且保溫類別只會選擇企業
-    if extracted["category"] == "保溫":
-        extracted["source"] = "企業"
-    else:
-        for src in sources:
-            if src in text:
-                extracted["source"] = src
-                break
-
-    # 檢查是否有匹配的 action
-    for keyword, mapped in actions_map.items():
-        if keyword in text:
-            extracted["action"] = mapped
-            break
-
-    return extracted """
 
     # 定義 categories_map，類似 actions_map 的結構
 category_keywords = {
@@ -177,12 +150,9 @@ category_keywords = {
 
 action_keywords = {
     "詢問內容": ["查詢", "查", "詢問", "找"],
-    "下載": ["下載", "給我", "提供"],
-}
-
+    "下載": ["下載", "給我", "提供"],}
 
 sources = ["企業", "塑化"]
-
 categories_map = {k: v for v, keys in category_keywords.items() for k in keys}
 actions_map = {k: v for v, keys in action_keywords.items() for k in keys}
 
@@ -209,10 +179,14 @@ def extract_from_query(text):
 @app.route("/webhook", methods=["POST"])
 def webhook():
     req = request.get_json()
+    if not isinstance(req, dict):
+        print(f"❌ 錯誤：req 不是字典，而是 {type(req)}")
+        return jsonify({"fulfillmentText": "請求格式錯誤，請確保 Content-Type 為 application/json。"}) 
+
     query_result = req.get("queryResult", {})
     user_query = query_result.get("queryText", "")
     session = req.get("session", "")
-    intent = query_result.get("intent", {}).get("displayName", "")
+    intent = req.get("queryResult", {}).get("intent", {}).get("displayName", "")
 
     # 讀取 context 中的參數
     context_params = {}
@@ -342,36 +316,13 @@ def webhook():
         })
 
     if intent == "Default Fallback Intent":
-        spec_summary, matched_titles, total_matches = search_piping_spec(user_query)
+        return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範")
 
-        if total_matches > 0:
-            if len(spec_summary) > 500:
-                reply = f"根據企業配管共同規範資料，找到相關內容(已截取)：\n{spec_summary[:500]}...\n🔔 內容過長，請查閱完整規範。"
-            else:
-                reply = f"根據企業配管共同規範資料，找到相關內容：\n{spec_summary}"
-        else:
-            # 如果找不到，呼叫ChatGPT
-            try:
-                print("🔍 呼叫 GPT-3.5-Turbo 回答...")
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "你是配管設計專家，只回答與配管相關的問題。"},
-                        {"role": "user", "content": user_query}
-                    ],
-                    max_tokens=500,
-                    temperature=0.2,
-                    top_p=0.8
-                )
-                reply = response.choices[0].message.content.strip()
-            except Exception as e:
-                print("❌ GPT 呼叫失敗:", e)
-                reply = "抱歉，目前無法處理您的請求。請稍後再試。"
+    elif intent == "詢問熱處理規範":
+        return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
 
-        return jsonify({
-            "fulfillmentText": reply
-        })
-    # 如果不是 Default Fallback Intent，執行其他邏輯
+    else:  # fallback
+        return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
     return jsonify({
         "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐", "查詢油漆", "查詢鋼構", "查詢保溫"])],

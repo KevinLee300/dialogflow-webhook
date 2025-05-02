@@ -1,0 +1,83 @@
+{
+    "一": {
+        "title": "1.0 SCOPE",
+        "content": {
+            "1.0": "Scope",
+            "1.1": " This specification covers the general requirements for the preheating, interpass temperature control, postheating, and postweld heat treatment of piping for refineries and chemical plants.",
+            "1.2": " If piping system belong to ASME B31.1 Power Piping scope,the piping shall be performed heat treatment per FPG Power Piping Specification(FGES﹣T﹣PPI50﹚ and ASME B31﹒1 code latest edition.",
+            "1.3": " In the event that a conflict occurs between this specification and the piping drawings, referenced specifications or codes stated in paragraph 2.0, FPCC engineer shall be consulted for the clarification of such conflict.",
+            "1.4": " Heat treatment required for bending and forming is not included."
+            }
+        },
+    "二": {
+        "title": "2.0 REFERENCES",
+        "content": {  
+            "2.1": " The requirements contained in the latest editions of the following codes or specification shall form a part of this specification, in the manner and to the extent indicated herein.",
+            "2.1.1": " ASME B31.3, Chemical Plant and Petroleum Refinery Piping",
+            "2.1.2": " ASME, Boiler and Pressure Vessel Code, Section IX, Welding and Brazing Qualifications",
+            "2.1.3": " E1928-CSM-02, Construction Specification for Piping Examination and Inspection,",
+            "2.1.4": " FGES-T-PPIO0 企 業 配 管 共 同 要 求 規 範"
+            }
+        },
+    "三": {
+        "title": "3.0 GENERAL REQUIREMENTS",
+        "content": {             
+            "3.1": " The entire piping assembly to be heat treated shall be fitted into furnace with adequate supports to minimize its distortions during the process of heat treatment The machine finished surface of parts to be heat treated shall be properly protected to prevent from oxidation.",
+            "3.2": " The equipment for field heat treatment shall contain at least but not limit to the following ﹕\n 1. Automatic Stress Relieve Device\n2. Heating Coil\n3 Thermocouple Ceramic Ring\n5 Asbestos Cloth or Insulation Blanket",
+            "3.3": " Temperature of the furnace shall be properly controlled so that holding temperature can be maintained within plus or minus 40 °F of the specified temperature. The maximum temperature difference inside the furnace shall not exceed 150 °F during its heating and cooling.",
+            "3.4": " All themocouples or electrical resistance thermometers used for heat treatment shall be full scale﹣calibrated by utilizing standard proven instruments.",
+            "3.5": " Materials to be heat treated shall prevent from touching other non-ferrous or alloy materials at high temperature condition.",
+            "3.6": " Use furnace to perform heat treatment, wherever possible. In the event that furnace can not be used, thermocouples shall be directly attached to materials to be heat treated to measure and record the temperature.",
+            "3.7": " All local heat treatments shall be performed by the use of electric inductance or electric resistance heating method.",
+            "3.8": " Valves and other delicate instruments shall be properly protected to prevent from damage.",
+            "3.9": " Prior to heat treatment, welding supervisor and inspector shall confirm that the Welding Procedure Specifications (WPS) have been qualified in accordance with the applicable provisions of ASME SECTION IX and ASME B31.3."
+            }
+        },
+    "四": {
+        "title": "4.0 PREHEATING AND INTERPASS TEMERATURE CONTROL",
+        "content": {
+            "4.1": " Unless otherwise specified, the preheating applies to gas cutting and welding (all welds including butt welds, fillet welds, socket welds, repair welds, tack welds, and seal welds of threaded joints) shall be performed as follows.",
+            "4.1.1": " The preheating shall be performed in accordance with Appendix 1.",
+            "4.1.2": " If the maximum specified carbon content is more than 0.30%, or if the material is under a high degree of restraint (weld-all-around such as pipe shoe), carbon steel shall be preheated to a minimum of 80°C and maintained at that temperature.",
+            "4.1.3": " When welding dissimilar metals that require different preheating temperatures, unless otherwise specified, the preheating, temperature shall be the higher temperature of the two metals shown in Appendix 1.",
+            "4.1.4": " The width of the heated circumferential band shall be 4 times the pipe nominal wall thickness or 100mm, whichever is greater, extending on both sides of the welds.",
+            "4.1.5.": " Heat shall be applied by using a gas burner or a heating coil The use of a gas bumer for cutting shall not be permitted since it tends to heat locally",
+            "4.1.6": " Temperature control of preheating, interpass temperature, and postheating shall be performed by use of temperature indicating rayons (tempil stick), thermocouple pyrometers or other suitable means, and it shall be checked that the specified temperature is obtained and maintained.",
+            "4.1.7": " All alloy welding joints shall be preheated prior to welding, refer appendix 1..",
+            "4.1.8": " Alloy steel pipes, on which integral support attachments including pipe shoe or saddle are welded, shall be preheated prior to welding.",
+            "4.1.9": " Tack welds shall be treated as welding, the preheating temperature For the tack welds shall be in accordance with Appendix 1.",
+            "4.2": " Interpass temperature of the materials shall not be in excess of the maximum temperature shown in Appendix 1 and shall be maintained until the welding has been completed.",
+            "4.3": " The preheating and interpass temperature shall be checked and recorded in accordance with WPS (Welding Procedure Specification)."
+            }      
+        },
+    "五": {
+        "title": "5.0 POSTHEATING",
+        "content": {            
+            "5.0 POSTHEATING": "For the joints of P﹣Number 4 over NPS 6\" or more than 10mm in thickness, and P- Number 5 materials, postheating shall be carried out for more than 30 minutes within the temperature range of 300° to 400°C, then the welds shall be cooled gradually by the use of insulation or other suitable materials. However, when the postweld heat treatment is performed immediately after welding, postheating is not necessary."
+            }
+        },
+    "六": {
+        "title": "6.0 POSTWELD HEAT TREATMENT",
+        "content": {                
+            "6.1": " Procedure\nUnless otherwise specified, postweld heat treatment shall be performed in accordance with the following procedures. However, postweld heat treatment for dissimilar metals shall be in accordance with the individual specifications.",
+            "6.1.1": " The requirements for heat treatment shall be in accordance with Appendix 2. Heat treatment of welded joints between dissimilar carbon and low﹣alloy steels of P-Numbers 1, 3, 4, and 5 shall be within the higher temperature ranges of either steel shown in Appendix 2. However, if the welding of carbon steel to 5Cr-1/2Mo steel must be performed， the welding rods With intermediate chemical compositions shall be used.",
+            "6.1.2": " For welds of branch connections, fillet welds, seal welds, and welds for attachment of pipe supports, the thickness effect on heat treatment shall be considered in accordance with the requirements specified in Para. 331.1.3 of ASME B31.3.",
+            "6.1.3": " All the machined surfaces shall be protected adequately to prevent damage from scaling during heat treatment.",
+            "6.1.4": " In case of furnace heat treatment, all the pipes shall be supported properly during heat treatment to minimize warps and other distortions.",
+            "6.1.5": " In principle, after heat treatment has been completed, neitherrewelding nor reheating shall be performed﹒ However if rewelding is performed because of repairs, etc., heat treatment shall be performed again﹒",
+            "6.1.6": " When heat treatment is performed, the holding temperature, holding time, rate of heating and cooling, and the hardness after heat treatment shall be recorded.",
+            "6.1.7": " The measurement of heat treatment temperature shall be performed by measuring the metal temperature by use of thermocouple pyrometers, or by other suitable methods. However, when the heat treatment temperature is measured by the furnace temperature, the relation between the temperature of metal and furnace shall be considered.",
+            "6.1.8": " A hardness test shall be performed in accordance with FPCC's specification, E1928-CSM-02 to determine if the heat treatment has been performed satisfactorily.",
+            "6.1.9": " Heat treatment needed per process requirements shall also be performed in accordance with Appendix 2.",
+            "6.2": " Heating Methods \nFor heat treatment the application of the heat from a furnace is preferable. However, heat may be applied locally by the following, or by other suitable methods.",
+            "6.2.1": " Heating by Electrical Resistance\nThis is a method that a programmed movable automatic heater applies heat by means of Nichrome wire applied around the welds. Special attention shall be given to the following items﹒\nA. Protective measures shall be taken to prevent damage to the pipe surface or injury to the workers resulting from a short circuit of the lead wire, and to prevent persons， other than the operator, from entering the work area﹒\nB. The width to be heated shall extend 25mm beyond the toes of the weld on each side﹒\nC. The width to be insulated shall extend at least 150mm on each side of the weld.\nD. The heating and cooling rate shall be based on the general notes shown on ISO DWG in each unit accordingly.",
+            "6.2.2": " Heating by Gas Bumer\nThis is a method that heat is applied by a propane or butane gas burner. This method shall not be used unless specified by FPCC."
+            }
+        },
+    "七": {
+        "title": "7.0 APPENDICES",
+        "content": { 
+            "7.0": "The following appendices shall form a part of this specification.\nAppendix 1 - 配 管 施 工 預 熟 溫 度 。\nAppendix 2 - 配 管 銲 後 熱 處 理 (PWHT﹚。\nAppendix 3 - 免 除 銲 後 熱 處 理 。"
+        }
+    }
+}
