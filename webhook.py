@@ -288,8 +288,27 @@ def webhook():
                         "name": f"{session}/contexts/spec-context",
                         "lifespanCount": 5,
                         "parameters": {"category": category, "source": source}
-                    }]
+                    }]  
                 })
+        if not category:
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查管支撐", "查油漆", "查鋼構", "查保溫"])],
+                "outputContexts": [{
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {"source": source, "action": action}
+            }]
+        }) 
+
+        if not source:
+            return jsonify({
+                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
+                "outputContexts": [{
+                    "name": f"{session}/contexts/spec-context",
+                    "lifespanCount": 5,
+                    "parameters": {"category": category, "action": action}
+                }]
+            })
 
         if user_query in ["企業", "塑化"]:
     # 嘗試記得前一步選的 category（優先從 context）
