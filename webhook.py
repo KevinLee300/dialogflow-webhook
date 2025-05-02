@@ -290,30 +290,48 @@ def webhook():
                     }]  
                 })
         if user_query in ["企業", "塑化"]:
-    # 嘗試記得前一步選的 category（優先從 context）
             remembered_category = context_params.get("category", "")
+            # 🆕 檢查使用者原始問句是否含「下載」
+            action = "下載" if "下載" in context_params.get("original_query", user_query) else "查詢"
+
             if remembered_category:
-                return jsonify({
-                    "fulfillmentMessages": [
-                        payload_with_buttons(
-                            f"{remembered_category}（{user_query}）：請選擇下一步",
-                            [f"下載{remembered_category}（{user_query}）", "詢問內容"]
-                        )
-                    ],
-                    "outputContexts": [{
-                        "name": f"{session}/contexts/spec-context",
-                        "lifespanCount": 5,
-                        "parameters": {"category": remembered_category, "source": user_query}
-                    }]
-                })
+                if action == "下載":
+                    link = query_download_link(remembered_category, user_query)
+                    return jsonify({
+                        "fulfillmentText": f"這是 {remembered_category}（{user_query}）規範的下載連結：\n{link}",
+                        "outputContexts": [{
+                            "name": f"{session}/contexts/spec-context",
+                            "lifespanCount": 5,
+                            "parameters": {
+                                "category": remembered_category,
+                                "source": user_query,
+                                "action": action
+                            }
+                        }]
+                    })
+                else:
+                    return jsonify({
+                        "fulfillmentMessages": [
+                            payload_with_buttons(
+                                f"{remembered_category}（{user_query}）：請選擇下一步",
+                                [f"下載{remembered_category}（{user_query}）", "詢問內容"]
+                            )
+                        ],
+                        "outputContexts": [{
+                            "name": f"{session}/contexts/spec-context",
+                            "lifespanCount": 5,
+                            "parameters": {
+                                "category": remembered_category,
+                                "source": user_query,
+                                "action": action
+                            }
+                        }]
+                    })
             else:
-                # 🔁 沒有記住前面的類別，跳回「請選擇規範類別」
                 return jsonify({
                     "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
-                    "outputContexts": output_context({"source": user_query})  # 暫存 source
+                    "outputContexts": output_context({"source": user_query})
                 })
-
-
 
         # ✅ 加入自動下載條件
         if action == "下載" and category and source:
