@@ -206,7 +206,6 @@ def webhook():
     for context in query_result.get("outputContexts", []):
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
-            context_params["original_query"] = user_query
 
     def output_context(params):
         return [{
@@ -262,6 +261,7 @@ def webhook():
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
         if any(k in user_query for k in keywords):
             if not category:
+                print(f"🔍 Debug: category={category}, source={source}, action={action}")
                 return jsonify({
                     "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查管支撐", "查油漆", "查鋼構", "查保溫"])],
                     "outputContexts": [{
@@ -299,12 +299,14 @@ def webhook():
                     }]  
                 })
         if user_query in ["企業", "塑化"]:
+            # 從上下文中提取 category 和 action
             remembered_category = context_params.get("category", "")
-            # 🆕 檢查使用者原始問句是否含「下載」
-            action = "下載" if "下載" in context_params.get("original_query", user_query) else "查詢"
-
+            remembered_action = context_params.get("action", "")
+            
+            print(f"🔍 Debug: remembered_category={remembered_category}, remembered_action={remembered_action}, user_query={user_query}")
+            
             if remembered_category:
-                if action == "下載":
+                if remembered_action == "下載":
                     link = query_download_link(remembered_category, user_query)
                     return jsonify({
                         "fulfillmentText": f"這是 {remembered_category}（{user_query}）規範的下載連結：\n{link}",
@@ -314,7 +316,7 @@ def webhook():
                             "parameters": {
                                 "category": remembered_category,
                                 "source": user_query,
-                                "action": action
+                                "action": remembered_action
                             }
                         }]
                     })
@@ -332,23 +334,24 @@ def webhook():
                             "parameters": {
                                 "category": remembered_category,
                                 "source": user_query,
-                                "action": action
+                                "action": remembered_action
                             }
                         }]
                     })
             else:
                 return jsonify({
                     "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
-                    "outputContexts": output_context({"source": user_query})
+                    "outputContexts": output_context({"source": user_query, "action": remembered_action})
                 })
 
 
         if user_query == "詢問內容":
             # 清除 source
-            return jsonify({
-                "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
-                "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
-            })  
+                return jsonify({
+                    "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
+                    "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
+                })  
+        
         return jsonify({
         "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐", "查詢油漆", "查詢鋼構", "查詢保溫"])],
         "outputContexts": output_context({})
