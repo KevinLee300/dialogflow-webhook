@@ -189,9 +189,9 @@ def webhook():
     intent = req.get("queryResult", {}).get("intent", {}).get("displayName", "")
 
 
-    if intent == "Default Fallback Intent":
-
-        return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範")        
+    if intent == "詢問熱處理規範":
+        return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+        #return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範")        
 
     elif intent == "查詢規範2":
         # 讀取 context 中的參數
@@ -216,10 +216,6 @@ def webhook():
 
         print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
 
-        #if re.search(r"(?:TY(?:PE)?)[-\s]*\d{1,3}[A-Z]?", user_query.upper()):
-            #category = "管支撐"
-            #source = "塑化"
-        
         # 檢查是否提到 TYPE 編號
         match = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
         if match:
@@ -321,8 +317,8 @@ def webhook():
                 "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
             })  
     
-    elif intent == "詢問熱處理規範":
-        return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+    elif intent == "Default Fallback Intent":
+        return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範") 
 
     else:  # fallback
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
