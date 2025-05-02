@@ -207,25 +207,19 @@ def webhook():
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
-    def output_context(params):
-        return [{
-            "name": f"{session}/contexts/spec-context",
-            "lifespanCount": 5,
-            "parameters": params
-        }] 
-    
-    def extract_context_param(output_contexts, param_name):
-        for ctx in output_contexts:
-            parameters = ctx.get("parameters", {})
-            if param_name in parameters:
-                return parameters[param_name]
-        return None
+        def output_context(params):
+            return [{
+                "name": f"{session}/contexts/spec-context",
+                "lifespanCount": 5,
+                "parameters": params
+            }] 
 
 
     if intent == "詢問熱處理規範":
         # 設置 await_heat_question 到上下文
+        spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
         return jsonify({
-            "fulfillmentText": "請問您想詢問哪段熱處理規範內容？例如：溫度、時間等。",
+            "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
             "outputContexts": output_context({"await_heat_question": True})
         })
     elif intent == "查詢規範2":
