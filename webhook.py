@@ -37,6 +37,19 @@ except FileNotFoundError:
     piping_heat_treatment = {}
     print("❌ 無法找到熱處理規範 JSON 檔案。")
 
+#問題中文轉英文
+def translate_to_english(query):
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "請將下面的中文工程問題翻譯為簡潔精確的英文，供資料比對使用。"},
+            {"role": "user", "content": query}
+        ],
+        temperature=0.2
+    )
+    return response.choices[0].message.content.strip()
+
+
 def search_piping_spec(question, spec_data, keywords):
     question_cleaned = re.sub(r"\s+", "", question).lower()
     
@@ -77,6 +90,9 @@ def search_piping_spec(question, spec_data, keywords):
 def generate_spec_reply(user_query, spec_data, spec_type_desc):
     keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}  # 定義關鍵字
     summary, matched_titles, total_matches = search_piping_spec(user_query, spec_data, keywords)
+    if total_matches == 0:
+        english_query = translate_to_english(user_query)  # 翻譯成英文
+        summary, matched_titles, total_matches = search_piping_spec(english_query, spec_data, keywords)
 
     if total_matches > 0:
         if len(summary) > 500:
@@ -104,9 +120,6 @@ def generate_spec_reply(user_query, spec_data, spec_type_desc):
     return jsonify({
         "fulfillmentText": reply
     })
-
-
-
 
 #LINE 按鈕程式
 def payload_with_buttons(text, options):    
@@ -175,128 +188,6 @@ def extract_from_query(text):
 
     return found
        # 讀取 context 中的參數
-
-    context_params = {}
-    for context in query_result.get("outputContexts", []):
-        if "spec-context" in context.get("name", ""):
-            context_params = context.get("parameters", {})
-
-    def output_context(params):
-        return [{
-            "name": f"{session}/contexts/spec-context",
-            "lifespanCount": 5,
-            "parameters": params
-        }] 
-
-
-        # 統一取得參數：優先從 query 抽出，否則使用 context 中值
-        extracted_data = extract_from_query(user_query)
-        category = extracted_data.get("category", context_params.get("category", ""))
-        source = extracted_data.get("source", context_params.get("source", ""))
-        action = extracted_data.get("action", "")
-
-        print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
-
-        # 檢查是否提到 TYPE 編號
-        match = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
-        if match:
-            type_id = match.group(1)
-            # 判斷是否有英文字尾
-            if type_id[-1].isalpha():
-                type_key = f"TYPE{type_id[:-1].zfill(2)}{type_id[-1]}"
-            else:
-                type_key = f"TYPE{type_id.zfill(2)}"
-
-            if type_key in type_links:
-                link = type_links[type_key]
-                return jsonify({
-                    "fulfillmentText": f"這是管支撐規範（塑化）{type_key} 的下載連結：\n{link}"
-                })
-            else:
-                return jsonify({
-                    "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
-                })
-            
-            
-        keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
-        if any(k in user_query for k in keywords):
-            if not category:
-                return jsonify({
-                    "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查管支撐", "查油漆", "查鋼構", "查保溫"])],
-                    "outputContexts": [{
-                        "name": f"{session}/contexts/spec-context",
-                        "lifespanCount": 5,
-                        "parameters": {"source": source, "action": action}
-                    }]
-                })
-            elif not source:
-                return jsonify({
-                    "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
-                    "outputContexts": [{
-                        "name": f"{session}/contexts/spec-context",
-                        "lifespanCount": 5,
-                        "parameters": {"category": category, "action": action}
-                    }]
-                })
-            elif action == "下載":
-                link = query_download_link(category, source)
-                return jsonify({
-                    "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"
-                })
-            else:
-                return jsonify({
-                    "fulfillmentMessages": [
-                        payload_with_buttons(
-                            f"{category}（{user_query}）：請選擇下一步",
-                            [f"下載{category}（{user_query}）", "詢問內容"]
-                        )
-                    ],
-                    "outputContexts": [{
-                        "name": f"{session}/contexts/spec-context",
-                        "lifespanCount": 5,
-                        "parameters": {"category": category, "source": source}
-                    }]
-                })
-
-        if user_query in ["企業", "塑化"]:
-            # 嘗試記得前一步選的 category（優先從 context）
-            remembered_category = context_params.get("category", "")
-
-            if remembered_category:
-                return jsonify({
-                    "fulfillmentMessages": [
-                        payload_with_buttons(
-                            f"{remembered_category}（{user_query}）：請選擇下一步",
-                            [f"下載{remembered_category}（{user_query}）", "詢問內容"]
-                        )
-                    ],
-                    "outputContexts": [{
-                        "name": f"{session}/contexts/spec-context",
-                        "lifespanCount": 5,
-                        "parameters": {"category": remembered_category, "source": user_query}
-                    }]
-                })
-            else:
-                # 🔁 沒有記住前面的類別，跳回「請選擇規範類別」
-                return jsonify({
-                    "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
-                    "outputContexts": output_context({"source": user_query})  # 暫存 source
-                })
-
-        # ✅ 加入自動下載條件
-        if action == "下載" and category and source:
-            link = query_download_link(category, source)
-            return jsonify({
-                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-                "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
-            })
-
-        if user_query == "詢問內容":
-            # 清除 source
-            return jsonify({
-                "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
-                "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
-            })  
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -432,22 +323,17 @@ def webhook():
                 "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
                 "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
             })  
-    
-    if intent == "詢問熱處理規範":
-        return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
-        #return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範")       
-
-
-    elif intent == "Default Fallback Intent":
-        return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範") 
-
-    else:  # fallback
-        return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
-
-    return jsonify({
+        return jsonify({
         "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐", "查詢油漆", "查詢鋼構", "查詢保溫"])],
         "outputContexts": output_context({})
     })
+
+    if intent == "詢問熱處理規範":
+        return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範") 
+    elif intent == "Default Fallback Intent":
+        return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範") 
+    else:  # fallback
+        return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
