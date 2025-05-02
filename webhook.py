@@ -227,7 +227,7 @@ def webhook():
         extracted_data = extract_from_query(user_query)
         category = extracted_data.get("category", context_params.get("category", ""))
         source = extracted_data.get("source", context_params.get("source", ""))
-        action = extracted_data.get("action", "")
+        action = extracted_data.get("action", context_params.get("action", ""))
 
         # 檢查是否提到 TYPE 編號
         match = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
@@ -250,6 +250,14 @@ def webhook():
                 })
             
         print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")  
+        
+        # ✅ 加入自動下載條件
+        if action == "下載" and category and source:
+            link = query_download_link(category, source)
+            return jsonify({
+                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
+                "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
+            })
 
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
         if any(k in user_query for k in keywords):
@@ -334,13 +342,6 @@ def webhook():
                     "outputContexts": output_context({"source": user_query})
                 })
 
-        # ✅ 加入自動下載條件
-        if action == "下載" and category and source:
-            link = query_download_link(category, source)
-            return jsonify({
-                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-                "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
-            })
 
         if user_query == "詢問內容":
             # 清除 source
