@@ -228,8 +228,6 @@ def webhook():
         source = extracted_data.get("source", context_params.get("source", ""))
         action = extracted_data.get("action", "")
 
-        print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")
-
         # 檢查是否提到 TYPE 編號
         match = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
         if match:
@@ -250,7 +248,8 @@ def webhook():
                     "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
                 })
             
-            
+        print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")  
+
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
         if any(k in user_query for k in keywords):
             if not category:
@@ -290,21 +289,15 @@ def webhook():
                         "parameters": {"category": category, "source": source}
                     }]  
                 })
-
-        if not source:
-            return jsonify({
-                "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
-                "outputContexts": [{
-                    "name": f"{session}/contexts/spec-context",
-                    "lifespanCount": 5,
-                    "parameters": {"category": category, "action": action}
-                }]
-            })
-
         if user_query in ["企業", "塑化"]:
     # 嘗試記得前一步選的 category（優先從 context）
-            remembered_category = context_params.get("category", "")
+            session = req.get("session", "")
+            context_params = {}
+            for context in req.get("queryResult", {}).get("outputContexts", []):
+                if "spec-context" in context.get("name", ""):
+                    context_params = context.get("parameters", {})
 
+            remembered_category = context_params.get("category", "")
             if remembered_category:
                 return jsonify({
                     "fulfillmentMessages": [
@@ -325,6 +318,8 @@ def webhook():
                     "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
                     "outputContexts": output_context({"source": user_query})  # 暫存 source
                 })
+
+
 
         # ✅ 加入自動下載條件
         if action == "下載" and category and source:
