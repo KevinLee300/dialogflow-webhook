@@ -291,12 +291,6 @@ def webhook():
                 })
         if user_query in ["企業", "塑化"]:
     # 嘗試記得前一步選的 category（優先從 context）
-            session = req.get("session", "")
-            context_params = {}
-            for context in req.get("queryResult", {}).get("outputContexts", []):
-                if "spec-context" in context.get("name", ""):
-                    context_params = context.get("parameters", {})
-
             remembered_category = context_params.get("category", "")
             if remembered_category:
                 return jsonify({
