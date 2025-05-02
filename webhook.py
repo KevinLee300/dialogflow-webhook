@@ -141,7 +141,7 @@ def query_download_link(category, source):
 
     # 定義 categories_map，類似 actions_map 的結構
 category_keywords = {
-        "管支撐": ["管支撐", "支撐", "管道支撐"],
+        "管支撐": ["管支撐", "支撐", "管道支撐","PIPING SUPPORT","SUPPORT"],
         "油漆": ["油漆", "塗裝", "漆", "涂料", "painting"],
         "保溫": ["保溫", "隔熱", "熱保", "隔熱保溫"],
         "鋼構": ["鋼構", "鋼結構", "結構鋼", "鋼架", "結構", "結構體",
