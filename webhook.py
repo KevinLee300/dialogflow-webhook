@@ -331,8 +331,13 @@ def webhook():
         "outputContexts": output_context({})
     })
     elif intent == "Default Fallback Intent":
+        # 🔁 檢查是否來自 heat intent 的等待上下文
+        if "await_heat_question" in context_params:
+            return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+        
+         # 🧠 其他 fallback 邏輯（例如配管共同規範）
         return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範") 
-    else:  # fallback
+    else: 
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
 if __name__ == "__main__":
