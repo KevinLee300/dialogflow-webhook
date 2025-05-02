@@ -207,16 +207,27 @@ def webhook():
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
-        def output_context(params):
-            return [{
-                "name": f"{session}/contexts/spec-context",
-                "lifespanCount": 5,
-                "parameters": params
-            }] 
+    def output_context(params):
+        return [{
+            "name": f"{session}/contexts/spec-context",
+            "lifespanCount": 5,
+            "parameters": params
+        }] 
+    
+    def extract_context_param(output_contexts, param_name):
+        for ctx in output_contexts:
+            parameters = ctx.get("parameters", {})
+            if param_name in parameters:
+                return parameters[param_name]
+        return None
 
 
     if intent == "詢問熱處理規範":
-        return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範") 
+        # 設置 await_heat_question 到上下文
+        return jsonify({
+            "fulfillmentText": "請問您想詢問哪段熱處理規範內容？例如：溫度、時間等。",
+            "outputContexts": output_context({"await_heat_question": True})
+        })
     elif intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
@@ -331,12 +342,13 @@ def webhook():
         "outputContexts": output_context({})
     })
     elif intent == "Default Fallback Intent":
-        # 🔁 檢查是否來自 heat intent 的等待上下文
-        if "await_heat_question" in context_params:
+    # 🔁 檢查是否來自 heat intent 的等待上下文
+        if context_params.get("await_heat_question"):
+            print("🔄 重新路由到熱處理規範")
             return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
         
-         # 🧠 其他 fallback 邏輯（例如配管共同規範）
-        return generate_spec_reply(user_query, piping_specification , "詢問配管共同規範") 
+        # 🧠 其他 fallback 邏輯（例如配管共同規範）
+        return generate_spec_reply(user_query, piping_specification, "詢問配管共同規範")
     else: 
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
