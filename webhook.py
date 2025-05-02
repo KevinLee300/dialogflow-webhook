@@ -40,7 +40,7 @@ except FileNotFoundError:
 #問題中文轉英文
 def translate_to_english(query):
     response = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "請將下面的中文工程問題翻譯為簡潔精確的英文，供資料比對使用。"},
             {"role": "user", "content": query}
