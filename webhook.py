@@ -279,11 +279,6 @@ def webhook():
                         "parameters": {"category": category, "action": action}
                     }]
                 })
-            elif action == "下載":
-                link = query_download_link(category, source)
-                return jsonify({
-                    "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}"
-                })
             else:
                 return jsonify({
                     "fulfillmentMessages": [
