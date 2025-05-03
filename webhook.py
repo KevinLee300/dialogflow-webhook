@@ -356,7 +356,7 @@ def webhook():
         try:
             print("💬 由 GPT 回答規範內容...")
             response = client.chat.completions.create(
-                model="gpt-4",  # 建議使用 gpt-4 或 gpt-4-turbo
+                model="gpt-3.5-turbo",  # 建議使用 gpt-4 或 gpt-4-turbo
                 messages=[
                     {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題，請根據使用者的問題提供清楚簡潔的回答。"},
                     {"role": "user", "content": user_query}
@@ -389,7 +389,7 @@ def webhook():
             try:
                 print("💬 由 GPT 回答規範內容...")
                 response = client.chat.completions.create(
-                        model="gpt-4",  # 建議使用 gpt-4 或 gpt-4-turbo
+                        model="gpt-3.5-turbo",  # 建議使用 gpt-4 或 gpt-4-turbo
                         messages=[
                             {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題，請根據使用者的問題提供清楚簡潔的回答。"},
                             {"role": "user", "content": user_query}
