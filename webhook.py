@@ -375,7 +375,8 @@ def webhook():
             reply = "抱歉，目前無法處理您的請求，請稍後再試。"
 
         return jsonify({
-            "fulfillmentText": reply
+            "fulfillmentText": reply,
+            "outputContexts": output_context({"await_pipeclass_question": True})
         })     
 
     elif intent == "Default Fallback Intent":
@@ -416,27 +417,7 @@ def webhook():
 
         # 🧠 其他 fallback 邏輯（例如配管共同規範）
         return generate_spec_reply(user_query, piping_specification, "詢問配管共同規範")
-    elif intent == "管線等級問題回答":
-        try:
-            print("💬 由 GPT 回答規範內容...")
-            response = client.chat.completions.create(
-                model="gpt-4",  # 建議使用 gpt-4 或 gpt-4-turbo
-                messages=[
-                    {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題，請根據使用者的問題提供清楚簡潔的回答。"},
-                    {"role": "user", "content": user_query}
-                ],
-                max_tokens=500,
-                temperature=0.2,
-                top_p=0.8
-            )
-            reply = response.choices[0].message.content.strip()
-        except Exception as e:
-            print("❌ GPT 呼叫失敗:", e)
-            reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-        return jsonify({
-            "fulfillmentText": reply
-        })     
+    
     else: 
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
