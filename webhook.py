@@ -261,7 +261,6 @@ def webhook():
                 "fulfillmentText": "抱歉，我無法理解您的問題，請再試一次。",
             })
         
-    
         # 檢查是否在選擇階段
         if context_params.get("await_spec_selection"):
             # 使用者輸入數字選擇項目
@@ -278,6 +277,7 @@ def webhook():
                 index = int(user_choice) - 1
                 if 0 <= index < len(spec_items):
                     title, content = spec_items[index]
+                    # 當使用者選擇一個項目後，結束選擇階段
                     return jsonify({
                         "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
                         "outputContexts": output_context({})  # 清除上下文
@@ -332,6 +332,7 @@ def webhook():
                 "fulfillmentText": reply
             })
             
+    # 在 intent 處理邏輯中的改動：
     if intent == "詢問熱處理規範":
         print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
         # 檢查是否在選擇階段
@@ -349,6 +350,7 @@ def webhook():
                 index = int(user_choice) - 1
                 if 0 <= index < len(spec_items):
                     title, content = spec_items[index]
+                    # 當使用者選擇一個項目後，結束選擇階段
                     return jsonify({
                         "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
                         "outputContexts": output_context({})  # 清除上下文
