@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify 
 import os
 from openai import OpenAI
 import json
@@ -260,6 +260,35 @@ def webhook():
             return jsonify({
                 "fulfillmentText": "抱歉，我無法理解您的問題，請再試一次。",
             })
+        
+        # 檢查是否在選擇階段
+        if context_params.get("await_spec_selection"):
+            # 使用者輸入數字選擇項目
+            user_choice = user_query.strip()
+            spec_items = context_params.get("spec_options", [])
+
+            if not spec_items:
+                return jsonify({
+                    "fulfillmentText": "上下文已過期，請重新查詢。",
+                    "outputContexts": output_context({})
+                })
+
+            if user_choice.isdigit():
+                index = int(user_choice) - 1
+                if 0 <= index < len(spec_items):
+                    title, content = spec_items[index]
+                    return jsonify({
+                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
+                        "outputContexts": output_context({})  # 清除上下文
+                    })
+                else:
+                    return jsonify({
+                        "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
+                    })
+            else:
+                return jsonify({
+                    "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
+                })
 
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
 
