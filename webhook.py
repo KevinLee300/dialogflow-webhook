@@ -240,13 +240,6 @@ sources = ["企業", "塑化"]
 categories_map = {k: v for v, keys in category_keywords.items() for k in keys}
 actions_map = {k: v for v, keys in action_keywords.items() for k in keys}
 
-def output_context(params: dict, lifespan: int = 5, session: str = ""):
-    return [{
-        "name": f"{session}/contexts/spec-context",
-        "lifespanCount": lifespan,
-        "parameters": params
-    }]
-
 def extract_from_query(text):
     found = {"category": "", "source": "", "action": ""}
 
@@ -285,12 +278,12 @@ def webhook():
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
-    # def output_context(params):
-    #     return [{
-    #         "name": f"{session}/contexts/spec-context",
-    #         "lifespanCount": 5,
-    #         "parameters": params
-    #     }] 
+    def output_context(params):
+        return [{
+            "name": f"{session}/contexts/spec-context",
+            "lifespanCount": 5,
+            "parameters": params
+        }] 
 
     if intent == "詢問熱處理規範":
         # 設置 await_heat_question 到上下文
