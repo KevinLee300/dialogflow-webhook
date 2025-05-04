@@ -148,48 +148,7 @@ def search_piping_spec(question, spec_data, keywords):
 #     })
  """
 
-def generate_spec_reply(user_query, spec_data, spec_type_desc):
-    keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
 
-    summary, matched_details, total_matches = search_piping_spec(user_query, spec_data, keywords)
-
-    if total_matches == 0:
-        english_query = translate_to_english(user_query)
-        summary, matched_details, total_matches = search_piping_spec(english_query, spec_data, keywords)
-
-    if total_matches > 0:
-        reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
-        
-        # 回傳 matched_details（可序列化）存在 context 中
-        return jsonify({
-            "fulfillmentText": reply,
-            "outputContexts": output_context({
-                "await_spec_selection": True,
-                "spec_options": list(matched_details.items())  # 傳成 list 才能序列化成 JSON
-            })
-        })
-    else:
-        # 🔁 fallback to GPT
-        try:
-            print("🔍 呼叫 GPT 回答...")
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
-                    {"role": "user", "content": user_query}
-                ],
-                max_tokens=500,
-                temperature=0.2,
-                top_p=0.8
-            )
-            reply = response.choices[0].message.content.strip()
-        except Exception as e:
-            print("❌ GPT 呼叫失敗:", e)
-            reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-        return jsonify({
-            "fulfillmentText": reply
-        })
 
 
 #LINE 按鈕程式
@@ -240,6 +199,7 @@ sources = ["企業", "塑化"]
 categories_map = {k: v for v, keys in category_keywords.items() for k in keys}
 actions_map = {k: v for v, keys in action_keywords.items() for k in keys}
 
+
 def extract_from_query(text):
     found = {"category": "", "source": "", "action": ""}
 
@@ -284,7 +244,48 @@ def webhook():
             "lifespanCount": 5,
             "parameters": params
         }] 
+    def generate_spec_reply(user_query, spec_data, spec_type_desc):
+        keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
 
+        summary, matched_details, total_matches = search_piping_spec(user_query, spec_data, keywords)
+
+        if total_matches == 0:
+            english_query = translate_to_english(user_query)
+            summary, matched_details, total_matches = search_piping_spec(english_query, spec_data, keywords)
+
+        if total_matches > 0:
+            reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
+            
+            # 回傳 matched_details（可序列化）存在 context 中
+            return jsonify({
+                "fulfillmentText": reply,
+                "outputContexts": output_context({
+                    "await_spec_selection": True,
+                    "spec_options": list(matched_details.items())  # 傳成 list 才能序列化成 JSON
+                })
+            })
+        else:
+            # 🔁 fallback to GPT
+            try:
+                print("🔍 呼叫 GPT 回答...")
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
+                        {"role": "user", "content": user_query}
+                    ],
+                    max_tokens=500,
+                    temperature=0.2,
+                    top_p=0.8
+                )
+                reply = response.choices[0].message.content.strip()
+            except Exception as e:
+                print("❌ GPT 呼叫失敗:", e)
+                reply = "抱歉，目前無法處理您的請求，請稍後再試。"
+
+            return jsonify({
+                "fulfillmentText": reply
+            })
     if intent == "詢問熱處理規範":
         # 設置 await_heat_question 到上下文
         spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
