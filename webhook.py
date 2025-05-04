@@ -546,7 +546,8 @@ def webhook():
        # 🔁 處理熱處理後續問題
         if context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
-            return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+            spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+            return jsonify(spec_reply)
 
         # 🔁 處理其他規範問題
         elif context_params.get("await_pipeclass_question"):
