@@ -311,9 +311,7 @@ def webhook():
 
             return jsonify({
                 "fulfillmentText": reply
-            })
-        
-
+            })     
 
     if intent == "詢問熱處理規範":
         print(f"🔍 Debug: intent={intent}, user_query={user_query}, context_params={context_params}")
@@ -534,14 +532,26 @@ def webhook():
             })
         elif context_params.get("await_spec_selection"):
             user_choice = user_query.strip()
+            spec_items = context_params.get("spec_options", [])
+
+            if not spec_items:
+                # 如果上下文中沒有選項，清除上下文並退出
+                return jsonify({
+                    "fulfillmentText": "上下文已過期，請重新查詢。",
+                    "outputContexts": output_context({})
+                })
+
+            print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
+
             if user_choice.isdigit():
                 index = int(user_choice) - 1
-                spec_items = context_params.get("spec_options", [])
-
                 if 0 <= index < len(spec_items):
                     title, content = spec_items[index]
+
+                    # 清除上下文
                     return jsonify({
-                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}"
+                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
+                        "outputContexts": output_context({})  # 清除上下文
                     })
                 else:
                     return jsonify({
