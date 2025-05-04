@@ -263,7 +263,6 @@ def webhook():
                 # 清除上下文
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({})  # 清除上下文
                 })
             else:
                 return jsonify({
