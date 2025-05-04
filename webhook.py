@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from fuzzywuzzy import fuzz
 import os
 from openai import OpenAI
 import json
@@ -87,9 +88,9 @@ def translate_to_english(query):
 
     return "", [], 0 """
 
-def search_piping_spec(question, spec_data, keywords):
+def search_piping_spec(question, spec_data, keywords, threshold=70):
     question_cleaned = re.sub(r"\s+", "", question).lower()
-    
+
     matched_summaries = []
     matched_details = {}
     total_matches = 0
@@ -100,7 +101,11 @@ def search_piping_spec(question, spec_data, keywords):
 
         for sec_num, sec_text in content.items():
             text_clean = re.sub(r"\s+", "", sec_text).lower()
-            if any(kw in text_clean for kw in keywords) or question_cleaned in text_clean:
+
+            # 模糊比對分數
+            score = fuzz.partial_ratio(question_cleaned, text_clean)
+
+            if score >= threshold:
                 key = f"第{chapter}章 {title} - {sec_num}"
                 matched_summaries.append(key)
                 matched_details[key] = sec_text
