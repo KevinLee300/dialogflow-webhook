@@ -246,7 +246,6 @@ def webhook():
         }] 
     def generate_spec_reply(user_query, spec_data, spec_type_desc):
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
-
         summary, matched_details, total_matches = search_piping_spec(user_query, spec_data, keywords)
 
         if total_matches == 0:
@@ -488,7 +487,6 @@ def webhook():
                     title, content = spec_items[index]
                     return jsonify({
                         "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                        "outputContexts": []
                     })
                 else:
                     return jsonify({
