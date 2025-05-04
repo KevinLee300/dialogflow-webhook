@@ -254,13 +254,14 @@ def webhook():
                 "parameters": params
             }]
    
-    def generate_spec_reply(user_query, spec_data, spec_type_desc):
+    def generate_spec_reply(user_query, spec_data, spec_type_desc, context_params):
         # 當找不到相關資料或出現錯誤時，可以回傳預設訊息
         if not user_query.strip():
             return jsonify({
                 "fulfillmentText": "抱歉，我無法理解您的問題，請再試一次。",
             })
         
+    
         # 檢查是否在選擇階段
         if context_params.get("await_spec_selection"):
             # 使用者輸入數字選擇項目
@@ -333,7 +334,6 @@ def webhook():
             
     if intent == "詢問熱處理規範":
         print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
-
         # 檢查是否在選擇階段
         if context_params.get("await_spec_selection"):
             user_choice = user_query.strip()
@@ -361,11 +361,10 @@ def webhook():
                 return jsonify({
                     "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
                 })
-
         # 若不在選擇階段，則執行搜尋
         spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範", context_params)
         return jsonify({
-            "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
+            "fulfillmentText": spec_reply.get_json()["fulfillmentText"],  # 用 .get_json() 來提取 response 中的內容
             "outputContexts": output_context({"await_heat_question": True})  # 設置上下文
         })
 
