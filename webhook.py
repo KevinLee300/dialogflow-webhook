@@ -487,7 +487,7 @@ def webhook():
                 if 0 <= index < len(spec_items):
                     title, content = spec_items[index]
                     return jsonify({
-                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}"
+                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
                         "outputContexts": []
                     })
                 else:
