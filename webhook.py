@@ -474,7 +474,8 @@ def webhook():
         "outputContexts": output_context({})
     })
 
-    elif intent == "管線等級問題回答":
+    elif intent == "詢問管線等級問題回答":
+        print("💬 由 GPT 回答規範內容...")
         try:
             print("💬 由 GPT 回答規範內容...")
             response = client.chat.completions.create(
@@ -554,6 +555,7 @@ def webhook():
         # 🔁 若是企業配管等其他規範問題
         elif context_params.get("await_pipeclass_question"):
             try:
+                print(f"🔍 由 GPT 回答規範內容...")
                 print("💬 由 GPT 回答規範內容...")
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
