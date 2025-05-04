@@ -314,7 +314,7 @@ def webhook():
 
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({"await_spec_selection": False})
+                    "outputContexts": output_context({})
                         # 清除上下文
                 })
             else:
