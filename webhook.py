@@ -230,6 +230,8 @@ def webhook():
     session = req.get("session", "")
     intent = req.get("queryResult", {}).get("intent", {}).get("displayName", "")
 
+    print(f"🔍 Debug: 進入分支 - {intent}")
+
     # 讀取 context 中的參數
     context_params = {}
     for context in req.get("queryResult", {}).get("outputContexts", []):
@@ -253,9 +255,11 @@ def webhook():
             }]
    
     def generate_spec_reply(user_query, spec_data, spec_type_desc):
-        # ✅ 避免將選項編號誤認為查詢關鍵字
-        if user_query.strip().isdigit():
-            return None
+        # 當找不到相關資料或出現錯誤時，可以回傳預設訊息
+        if not user_query.strip():
+            return jsonify({
+                "fulfillmentText": "抱歉，我無法理解您的問題，請再試一次。",
+            })
 
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
 
@@ -269,10 +273,7 @@ def webhook():
 
         # ✅ 找到資料，回傳選擇項目提示
         if total_matches > 0:
-            reply = (
-                f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n"
-                f"{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
-            )
+            reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
             return jsonify({
                 "fulfillmentText": reply,
                 "outputContexts": output_context({
@@ -281,47 +282,40 @@ def webhook():
                 })
             })
 
-        # ❌ 若仍找不到，則 fallback 給 GPT 回答
-        try:
-            print("🔍 呼叫 GPT 回答...")
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
-                    {"role": "user", "content": user_query}
-                ],
-                max_tokens=500,
-                temperature=0.2,
-                top_p=0.8
-            )
-            reply = response.choices[0].message.content.strip()
-        except Exception as e:
-            print("❌ GPT 呼叫失敗:", e)
-            reply = "抱歉，目前無法處理您的請求，請稍後再試。"
+        else:
+            try:
+                print("🔍 呼叫 GPT 回答...")
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
+                            {"role": "user", "content": user_query}],
+                    max_tokens=500,
+                    temperature=0.2,
+                    top_p=0.8
+                )
+                reply = response.choices[0].message.content.strip()
+            except Exception as e:
+                print("❌ GPT 呼叫失敗:", e)
+                reply = "抱歉，目前無法處理您的請求，請稍後再試。"
 
-        return jsonify({
-            "fulfillmentText": reply
-        })
+            return jsonify({
+                "fulfillmentText": reply
+            })
     
     if context_params.get("await_spec_selection"):
         user_choice = user_query.strip()
         spec_items = context_params.get("spec_options", [])
 
         if not spec_items:
-            # 如果上下文中沒有選項，清除上下文並退出
             return jsonify({
                 "fulfillmentText": "上下文已過期，請重新查詢。",
                 "outputContexts": output_context({})
             })
 
-        print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
-
         if user_choice.isdigit():
             index = int(user_choice) - 1
             if 0 <= index < len(spec_items):
                 title, content = spec_items[index]
-
-                # 清除上下文
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
                     "outputContexts": output_context({})  # 清除上下文
@@ -531,7 +525,6 @@ def webhook():
     elif intent == "Default Fallback Intent":
         user_choice = user_query.strip()
         spec_items = context_params.get("spec_options", [])
-
         # ✅ 優先處理使用者選擇項目
         if context_params.get("await_spec_selection") and user_choice.isdigit():
             index = int(user_choice) - 1
