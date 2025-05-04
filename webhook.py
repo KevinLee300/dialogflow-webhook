@@ -50,7 +50,7 @@ def translate_to_english(query):
     return response.choices[0].message.content.strip()
 
 
-def search_piping_spec(question, spec_data, keywords):
+""" def search_piping_spec(question, spec_data, keywords):
     question_cleaned = re.sub(r"\s+", "", question).lower()
     
     matched_sections = []
@@ -85,21 +85,91 @@ def search_piping_spec(question, spec_data, keywords):
         summary = "\n".join(matched_sections)
         return summary, matched_titles, total_matches
 
-    return "", [], 0
+    return "", [], 0 """
+
+def search_piping_spec(question, spec_data, keywords):
+    question_cleaned = re.sub(r"\s+", "", question).lower()
+    
+    matched_summaries = []
+    matched_details = {}
+    total_matches = 0
+
+    for chapter, data in spec_data.items():
+        title = data.get("title", "")
+        content = data.get("content", {})
+
+        for sec_num, sec_text in content.items():
+            text_clean = re.sub(r"\s+", "", sec_text).lower()
+            if any(kw in text_clean for kw in keywords) or question_cleaned in text_clean:
+                key = f"第{chapter}章 {title} - {sec_num}"
+                matched_summaries.append(key)
+                matched_details[key] = sec_text
+                total_matches += 1
+
+    if matched_summaries:
+        summary = "\n".join([f"{i+1}. {s}" for i, s in enumerate(matched_summaries)])
+        return summary, matched_details, total_matches
+
+    return "查無相關內容。", {}, 0
+
+
+""" # def generate_spec_reply(user_query, spec_data, spec_type_desc):
+#     keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}  # 定義關鍵字
+#     summary, matched_titles, total_matches = search_piping_spec(user_query, spec_data, keywords)
+#     if total_matches == 0:
+#         english_query = translate_to_english(user_query)  # 翻譯成英文
+#         summary, matched_titles, total_matches = search_piping_spec(english_query, spec_data, keywords)
+
+#     if total_matches > 0:
+#         if len(summary) > 500:
+#             reply = f"根據《{spec_type_desc}》，找到相關內容（已截取）：\n{summary[:500]}...\n🔔 內容過長，請查閱完整規範。"
+#         else:
+#             reply = f"根據《{spec_type_desc}》，找到相關內容：\n{summary}"
+#     else:
+#         try:
+#             print("🔍 呼叫 GPT 回答...")
+#             response = client.chat.completions.create(
+#                 model="gpt-3.5-turbo",
+#                 messages=[
+#                     {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
+#                     {"role": "user", "content": user_query}
+#                 ],
+#                 max_tokens=500,
+#                 temperature=0.2,
+#                 top_p=0.8
+#             )
+#             reply = response.choices[0].message.content.strip()
+#         except Exception as e:
+#             print("❌ GPT 呼叫失敗:", e)
+#             reply = "抱歉，目前無法處理您的請求，請稍後再試。"
+
+#     return jsonify({
+#         "fulfillmentText": reply
+#     })
+ """
 
 def generate_spec_reply(user_query, spec_data, spec_type_desc):
-    keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}  # 定義關鍵字
-    summary, matched_titles, total_matches = search_piping_spec(user_query, spec_data, keywords)
+    keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
+
+    summary, matched_details, total_matches = search_piping_spec(user_query, spec_data, keywords)
+
     if total_matches == 0:
-        english_query = translate_to_english(user_query)  # 翻譯成英文
-        summary, matched_titles, total_matches = search_piping_spec(english_query, spec_data, keywords)
+        english_query = translate_to_english(user_query)
+        summary, matched_details, total_matches = search_piping_spec(english_query, spec_data, keywords)
 
     if total_matches > 0:
-        if len(summary) > 500:
-            reply = f"根據《{spec_type_desc}》，找到相關內容（已截取）：\n{summary[:500]}...\n🔔 內容過長，請查閱完整規範。"
-        else:
-            reply = f"根據《{spec_type_desc}》，找到相關內容：\n{summary}"
+        reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
+        
+        # 回傳 matched_details（可序列化）存在 context 中
+        return jsonify({
+            "fulfillmentText": reply,
+            "outputContexts": output_context({
+                "await_spec_selection": True,
+                "spec_options": list(matched_details.items())  # 傳成 list 才能序列化成 JSON
+            })
+        })
     else:
+        # 🔁 fallback to GPT
         try:
             print("🔍 呼叫 GPT 回答...")
             response = client.chat.completions.create(
@@ -117,9 +187,10 @@ def generate_spec_reply(user_query, spec_data, spec_type_desc):
             print("❌ GPT 呼叫失敗:", e)
             reply = "抱歉，目前無法處理您的請求，請稍後再試。"
 
-    return jsonify({
-        "fulfillmentText": reply
-    })
+        return jsonify({
+            "fulfillmentText": reply
+        })
+
 
 #LINE 按鈕程式
 def payload_with_buttons(text, options):    
@@ -169,6 +240,13 @@ sources = ["企業", "塑化"]
 categories_map = {k: v for v, keys in category_keywords.items() for k in keys}
 actions_map = {k: v for v, keys in action_keywords.items() for k in keys}
 
+def output_context(params: dict, lifespan: int = 5, session: str = ""):
+    return [{
+        "name": f"{session}/contexts/spec-context",
+        "lifespanCount": lifespan,
+        "parameters": params
+    }]
+
 def extract_from_query(text):
     found = {"category": "", "source": "", "action": ""}
 
@@ -207,13 +285,13 @@ def webhook():
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
-    def output_context(params):
-        return [{
-            "name": f"{session}/contexts/spec-context",
-            "lifespanCount": 5,
-            "parameters": params
-        }] 
-        
+    # def output_context(params):
+    #     return [{
+    #         "name": f"{session}/contexts/spec-context",
+    #         "lifespanCount": 5,
+    #         "parameters": params
+    #     }] 
+
     if intent == "詢問熱處理規範":
         # 設置 await_heat_question 到上下文
         spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
@@ -406,7 +484,26 @@ def webhook():
             return jsonify({
                 "fulfillmentText": reply
             })
-        
+        elif context_params.get("await_spec_selection"):
+            user_choice = user_query.strip()
+            if user_choice.isdigit():
+                index = int(user_choice) - 1
+                spec_items = context_params.get("spec_options", [])
+
+                if 0 <= index < len(spec_items):
+                    title, content = spec_items[index]
+                    return jsonify({
+                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}"
+                    })
+                else:
+                    return jsonify({
+                        "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
+                    })
+            else:
+                return jsonify({
+                    "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
+                })
+
         # 檢查是否有 category 和 source
         if context_params.get("category") and context_params.get("source"):
             category = context_params["category"]
