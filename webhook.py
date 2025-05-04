@@ -365,6 +365,12 @@ def webhook():
         #         "await_spec_selection": True
         #     })
         #})
+    elif intent == "詢問配管共同要求規範內容":
+        print(f"🔍 Debug詢問配管共同要求規範內容: intent={intent}, user_query={user_query}, context_params={context_params}")
+        spec_reply = generate_spec_reply(user_query, piping_specification, "詢問配管共同要求規範內容")
+
+        return jsonify(spec_reply)
+
     elif intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
@@ -547,6 +553,11 @@ def webhook():
         if context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
             spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+            return jsonify(spec_reply)
+
+        elif context_params.get("await_pipecommon_question"):
+            print("🔄 重新路由到配管共同規範")
+            spec_reply = generate_spec_reply(user_query, piping_specification, "詢問熱處理規範")
             return jsonify(spec_reply)
 
         # 🔁 處理其他規範問題
