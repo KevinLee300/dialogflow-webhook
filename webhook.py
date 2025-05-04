@@ -511,6 +511,22 @@ def webhook():
 
 
     elif intent == "Default Fallback Intent":
+        if context_params.get("await_spec_selection") and user_query.strip().isdigit():
+            # ✅ 模擬觸發 User Selects Spec Item intent
+            user_choice = user_query.strip()
+            spec_items = context_params.get("spec_options", [])
+            index = int(user_choice) - 1
+            if 0 <= index < len(spec_items):
+                title, content = spec_items[index]
+                return jsonify({
+                    "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
+                    "outputContexts": output_context({})
+                })
+            else:
+                return jsonify({
+                    "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）",
+                    "outputContexts": output_context({"await_spec_selection": True})
+                })
        # 🔁 處理熱處理後續問題
         if context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
