@@ -325,6 +325,13 @@ def webhook():
         user_choice = user_query.strip()
         spec_items = context_params.get("spec_options", [])
 
+        if not spec_items:
+            # 如果上下文中沒有選項，清除上下文並退出
+            return jsonify({
+                "fulfillmentText": "上下文已過期，請重新查詢。",
+                "outputContexts": output_context({})
+            })
+
         print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
 
         if user_choice.isdigit():
@@ -530,37 +537,6 @@ def webhook():
             return jsonify({
                 "fulfillmentText": reply
             })
-        elif context_params.get("await_spec_selection"):
-            user_choice = user_query.strip()
-            spec_items = context_params.get("spec_options", [])
-
-            if not spec_items:
-                # 如果上下文中沒有選項，清除上下文並退出
-                return jsonify({
-                    "fulfillmentText": "上下文已過期，請重新查詢。",
-                    "outputContexts": output_context({})
-                })
-
-            print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
-
-            if user_choice.isdigit():
-                index = int(user_choice) - 1
-                if 0 <= index < len(spec_items):
-                    title, content = spec_items[index]
-
-                    # 清除上下文
-                    return jsonify({
-                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                        "outputContexts": output_context({})  # 清除上下文
-                    })
-                else:
-                    return jsonify({
-                        "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
-                    })
-            else:
-                return jsonify({
-                    "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
-                })
 
         # 檢查是否有 category 和 source
         if context_params.get("category") and context_params.get("source"):
