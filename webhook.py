@@ -537,7 +537,7 @@ def webhook():
                     "outputContexts": output_context({"await_spec_selection": True})
                 })
        # 🔁 處理熱處理後續問題
-        if context_params.get("await_heat_question"):
+        elif context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
             return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
 
