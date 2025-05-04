@@ -328,7 +328,10 @@ def webhook():
             })
         
     if intent == "詢問熱處理規範":
+        print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
+        spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
         return jsonify({
+            "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
             "outputContexts": output_context({"await_heat_question": True})  # 設置上下文
         })
 
@@ -493,19 +496,28 @@ def webhook():
     elif intent == "User Selects Spec Item":
         user_choice = user_query.strip()
         spec_items = context_params.get("spec_options", [])
+
+        if not spec_items:
+            return jsonify({
+                "fulfillmentText": "目前沒有可供選擇的項目，請先提出查詢。"
+            })
+
         if user_choice.isdigit():
             index = int(user_choice) - 1
             if 0 <= index < len(spec_items):
                 title, content = spec_items[index]
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({})  # 清除 context
+                    "outputContexts": output_context({})  # ✅ 清除 context
                 })
             else:
                 return jsonify({
                     "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
                 })
-
+        else:
+            return jsonify({
+                "fulfillmentText": "請輸入有效的項目編號，例如 1 或 2。"
+            })
 
     elif intent == "Default Fallback Intent":
         if context_params.get("await_spec_selection") and user_query.strip().isdigit():
