@@ -237,15 +237,15 @@ def webhook():
             context_params = context.get("parameters", {})
 
     def output_context(params):
-        if not params or params.get("await_spec_selection") is False:
-            # 清除上下文
-            return [{
-                "name": f"{session}/contexts/spec-context",
-                "lifespanCount": 0,  # 設置 lifespanCount 為 0 清除上下文
-                "parameters": {}
-            }]
-        else:
-            # 保留上下文
+        # if not params or params.get("await_spec_selection") is False:
+        #     # 清除上下文
+        #     return [{
+        #         "name": f"{session}/contexts/spec-context",
+        #         "lifespanCount": 0,  # 設置 lifespanCount 為 0 清除上下文
+        #         "parameters": {}
+        #     }]
+        # else:
+        #     # 保留上下文
             return [{
                 "name": f"{session}/contexts/spec-context",
                 "lifespanCount": 5,  # 設置上下文的有效期
@@ -517,7 +517,7 @@ def webhook():
             "fulfillmentText": reply,
             "outputContexts": output_context({"await_pipeclass_question": True})
         })     
-    
+   
 
 
     elif intent == "Default Fallback Intent":
