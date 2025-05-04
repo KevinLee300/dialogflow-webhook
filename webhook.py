@@ -494,38 +494,12 @@ def webhook():
         })     
 
     elif intent == "Default Fallback Intent":
-    # 🔁 檢查是否來自 heat intent 的等待上下文
-        if context_params.get("await_heat_question"):
-            print("🔄 重新路由到熱處理規範")
-            return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範") 
-         
-        elif context_params.get("await_pipeclass_question"):
-            try:
-                print("💬 由 GPT 回答規範內容...")
-                response = client.chat.completions.create(
-                        model="gpt-3.5-turbo",  # 建議使用 gpt-4 或 gpt-4-turbo
-                        messages=[
-                            {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題，請根據使用者的問題提供清楚簡潔的回答。"},
-                            {"role": "user", "content": user_query}
-                        ],
-                        max_tokens=500,
-                        temperature=0.2,
-                        top_p=0.8
-                    )
-                reply = response.choices[0].message.content.strip()                 
-            except Exception as e:
-                print("❌ GPT 呼叫失敗:", e)
-                reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-            return jsonify({
-                "fulfillmentText": reply
-            })# 🔁 檢查是否來自 heat intent 的等待上下文
+        # ✅ 優先處理項目選擇回覆
         if context_params.get("await_spec_selection"):
             user_choice = user_query.strip()
             spec_items = context_params.get("spec_options", [])
 
             if not spec_items:
-                # 如果上下文中沒有選項，清除上下文並退出
                 return jsonify({
                     "fulfillmentText": "上下文已過期，請重新查詢。",
                     "outputContexts": output_context({})
@@ -537,11 +511,9 @@ def webhook():
                 index = int(user_choice) - 1
                 if 0 <= index < len(spec_items):
                     title, content = spec_items[index]
-
-                    # 清除上下文
                     return jsonify({
                         "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                        "outputContexts": output_context({})  # 清除上下文
+                        "outputContexts": output_context({})
                     })
                 else:
                     return jsonify({
@@ -552,66 +524,49 @@ def webhook():
                     "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
                 })
 
-         
+        # 🔁 處理熱處理後續問題
+        elif context_params.get("await_heat_question"):
+            print("🔄 重新路由到熱處理規範")
+            return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+
+        # 🔁 處理其他規範問題
         elif context_params.get("await_pipeclass_question"):
             try:
                 print("💬 由 GPT 回答規範內容...")
                 response = client.chat.completions.create(
-                        model="gpt-3.5-turbo",  # 建議使用 gpt-4 或 gpt-4-turbo
-                        messages=[
-                            {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題，請根據使用者的問題提供清楚簡潔的回答。"},
-                            {"role": "user", "content": user_query}
-                        ],
-                        max_tokens=500,
-                        temperature=0.2,
-                        top_p=0.8
-                    )
-                reply = response.choices[0].message.content.strip()                 
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"},
+                        {"role": "user", "content": user_query}
+                    ],
+                    max_tokens=500,
+                    temperature=0.2,
+                    top_p=0.8
+                )
+                reply = response.choices[0].message.content.strip()
             except Exception as e:
                 print("❌ GPT 呼叫失敗:", e)
                 reply = "抱歉，目前無法處理您的請求，請稍後再試。"
 
             return jsonify({
                 "fulfillmentText": reply
+            })   
+        try:
+            return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
+        except Exception as e:
+            print("❌ fallback 呼叫失敗:", e)
+            return jsonify({
+                "fulfillmentText": "抱歉，目前無法理解您的問題，請嘗試更換說法或提供更多資訊。"
             })
 
-        # 檢查是否有 category 和 source
-        if context_params.get("category") and context_params.get("source"):
-            category = context_params["category"]
-            source = context_params["source"]
-            return jsonify({
-                "fulfillmentText": f"您選擇的類別是 {category}，來源是 {source}，請問您需要什麼幫助？"
-            })  
-
-        # 🧠 其他 fallback 邏輯（例如配管共同規範）
+    else:
         try:
-            print("💬 由 GPT 回答規範內容...")
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",  # 建議使用 gpt-4 或 gpt-4-turbo
-                messages=[
-                    {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題，請根據使用者的問題提供清楚簡潔的回答。"},
-                    {"role": "user", "content": user_query}
-                ],
-                max_tokens=500,
-                temperature=0.2,
-                top_p=0.8
-            )
-            reply = response.choices[0].message.content.strip()
-            return jsonify({
-            "fulfillmentText": reply,
-            "outputContexts": output_context({"await_pipeclass_question": True})
-        })
+            return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
         except Exception as e:
-            print("❌ GPT 呼叫失敗:", e)
-            reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-        return jsonify({
-            "fulfillmentText": reply,
-            "outputContexts": output_context({"await_pipeclass_question": True})
-        })  
-    
-    else: 
-        return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
+            print("❌ fallback 呼叫失敗:", e)
+            return jsonify({
+                "fulfillmentText": "抱歉，目前無法理解您的問題，請嘗試更換說法或提供更多資訊。"
+            })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
