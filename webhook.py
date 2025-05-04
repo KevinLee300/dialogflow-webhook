@@ -526,12 +526,7 @@ def webhook():
                 return jsonify({
                     "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
                 })
-        elif context_params.get("await_heat_question"):
-            spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
-            return jsonify({
-                "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
-                "outputContexts": output_context({"await_heat_question": True})  # 設置上下文
-            })
+
          
         elif context_params.get("await_pipeclass_question"):
             try:
