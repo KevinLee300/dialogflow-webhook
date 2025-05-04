@@ -492,40 +492,27 @@ def webhook():
             "fulfillmentText": reply,
             "outputContexts": output_context({"await_pipeclass_question": True})
         })     
-
-    elif intent == "Default Fallback Intent":
-        # ✅ 優先處理項目選擇回覆
-        if context_params.get("await_spec_selection"):
-            user_choice = user_query.strip()
-            spec_items = context_params.get("spec_options", [])
-
-            if not spec_items:
+    
+    elif intent == "User Selects Spec Item":
+        user_choice = user_query.strip()
+        spec_items = context_params.get("spec_options", [])
+        if user_choice.isdigit():
+            index = int(user_choice) - 1
+            if 0 <= index < len(spec_items):
+                title, content = spec_items[index]
                 return jsonify({
-                    "fulfillmentText": "上下文已過期，請重新查詢。",
-                    "outputContexts": output_context({})
+                    "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
+                    "outputContexts": output_context({})  # 清除 context
                 })
-
-            print(f"🔍 Debug (Fallback): user_choice={user_choice}, spec_items={spec_items}")
-
-            if user_choice.isdigit():
-                index = int(user_choice) - 1
-                if 0 <= index < len(spec_items):
-                    title, content = spec_items[index]
-                    return jsonify({
-                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                        "outputContexts": output_context({})
-                    })
-                else:
-                    return jsonify({
-                        "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
-                    })
             else:
                 return jsonify({
-                    "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
+                    "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
                 })
 
-        # 🔁 處理熱處理後續問題
-        elif context_params.get("await_heat_question"):
+
+    elif intent == "Default Fallback Intent":
+       # 🔁 處理熱處理後續問題
+        if context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
             return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
 
@@ -551,22 +538,9 @@ def webhook():
             return jsonify({
                 "fulfillmentText": reply
             })   
-        try:
-            return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
-        except Exception as e:
-            print("❌ fallback 呼叫失敗:", e)
-            return jsonify({
-                "fulfillmentText": "抱歉，目前無法理解您的問題，請嘗試更換說法或提供更多資訊。"
-            })
-
-    else:
-        try:
-            return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
-        except Exception as e:
-            print("❌ fallback 呼叫失敗:", e)
-            return jsonify({
-                "fulfillmentText": "抱歉，目前無法理解您的問題，請嘗試更換說法或提供更多資訊。"
-            })
+ 
+    else: 
+        return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
