@@ -327,13 +327,10 @@ def webhook():
                 "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
             })
         
-    # if intent == "詢問熱處理規範":
-    #     print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
-    #     spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
-    #     return jsonify({
-    #         "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
-    #         "outputContexts": output_context({"await_heat_question": True})  # 設置上下文
-    #     })
+    if intent == "詢問熱處理規範":
+        return jsonify({
+            "outputContexts": output_context({"await_heat_question": True})  # 設置上下文
+        })
 
     if intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
