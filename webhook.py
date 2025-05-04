@@ -521,6 +521,7 @@ def webhook():
 
     elif intent == "Default Fallback Intent":
         if context_params.get("await_spec_selection") and user_query.strip().isdigit():
+            print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
             # ✅ 模擬觸發 User Selects Spec Item intent
             user_choice = user_query.strip()
             spec_items = context_params.get("spec_options", [])
