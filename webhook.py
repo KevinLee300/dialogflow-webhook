@@ -230,7 +230,7 @@ def webhook():
     session = req.get("session", "")
     intent = req.get("queryResult", {}).get("intent", {}).get("displayName", "")
 
-        # 讀取 context 中的參數
+    # 讀取 context 中的參數
     context_params = {}
     for context in req.get("queryResult", {}).get("outputContexts", []):
         if "spec-context" in context.get("name", ""):
@@ -298,6 +298,7 @@ def webhook():
     if context_params.get("await_spec_selection"):
         user_choice = user_query.strip()
         spec_items = context_params.get("spec_options", [])
+
         if not spec_items:
             # 如果上下文中沒有選項，清除上下文並退出
             return jsonify({
@@ -305,17 +306,17 @@ def webhook():
                 "outputContexts": output_context({})
             })
 
-        print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}") 
+        print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
 
         if user_choice.isdigit():
             index = int(user_choice) - 1
             if 0 <= index < len(spec_items):
                 title, content = spec_items[index]
 
+                # 清除上下文
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({})
-                        # 清除上下文
+                    "outputContexts": output_context({})  # 清除上下文
                 })
             else:
                 return jsonify({
