@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify 
+from flask import Flask, request, jsonify
 import os
 from openai import OpenAI
 import json
@@ -230,11 +230,9 @@ def webhook():
     session = req.get("session", "")
     intent = req.get("queryResult", {}).get("intent", {}).get("displayName", "")
 
-    print(f"🔍 Debug: 進入分支 - {intent}")
-
     # 讀取 context 中的參數
     context_params = {}
-    for context in query_result.get("outputContexts", []):
+    for context in req.get("queryResult", {}).get("outputContexts", []):
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
@@ -253,8 +251,50 @@ def webhook():
                 "lifespanCount": 5,  # 設置上下文的有效期
                 "parameters": params
             }]
+   
+    def generate_spec_reply(user_query, spec_data, spec_type_desc):
+        keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
 
-     # 優先處理 await_spec_selection 的邏輯
+        summary, matched_details, total_matches = search_piping_spec(user_query, spec_data, keywords)
+
+        if total_matches == 0:
+            english_query = translate_to_english(user_query)
+            summary, matched_details, total_matches = search_piping_spec(english_query, spec_data, keywords)
+
+        if total_matches > 0:
+            reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
+            
+            # 回傳 matched_details（可序列化）存在 context 中
+            return jsonify({
+                "fulfillmentText": reply,
+                "outputContexts": output_context({
+                    "await_spec_selection": True,
+                    "spec_options": list(matched_details.items())  # 傳成 list 才能序列化成 JSON
+                })
+            })
+        else:
+            # 🔁 fallback to GPT
+            try:
+                print("🔍 呼叫 GPT 回答...")
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
+                        {"role": "user", "content": user_query}
+                    ],
+                    max_tokens=500,
+                    temperature=0.2,
+                    top_p=0.8
+                )
+                reply = response.choices[0].message.content.strip()
+            except Exception as e:
+                print("❌ GPT 呼叫失敗:", e)
+                reply = "抱歉，目前無法處理您的請求，請稍後再試。"
+
+            return jsonify({
+                "fulfillmentText": reply
+            })
+    
     if context_params.get("await_spec_selection"):
         user_choice = user_query.strip()
         spec_items = context_params.get("spec_options", [])
@@ -286,96 +326,15 @@ def webhook():
             return jsonify({
                 "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
             })
-          
-    def generate_spec_reply(user_query, spec_data, spec_type_desc, context_params):
-        # 當找不到相關資料或出現錯誤時，可以回傳預設訊息
-        if not user_query.strip():
-            return jsonify({
-                "fulfillmentText": "抱歉，我無法理解您的問題，請再試一次。",
-            })
         
-        # 檢查是否在選擇階段
-        if context_params.get("await_spec_selection"):
-            # 使用者輸入數字選擇項目
-            user_choice = user_query.strip()
-            spec_items = context_params.get("spec_options", [])
-
-            if not spec_items:
-                return jsonify({
-                    "fulfillmentText": "上下文已過期，請重新查詢。",
-                    "outputContexts": output_context({})
-                })
-
-            if user_choice.isdigit():
-                index = int(user_choice) - 1
-                if 0 <= index < len(spec_items):
-                    title, content = spec_items[index]
-                    # 當使用者選擇一個項目後，結束選擇階段
-                    return jsonify({
-                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                        "outputContexts": output_context({})  # 清除上下文
-                    })
-                else:
-                    return jsonify({
-                        "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
-                    })
-            else:
-                return jsonify({
-                    "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
-                })
-
-        keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
-
-        # 第一次搜尋（中文原文）
-        summary, matched_details, total_matches = search_piping_spec(user_query, spec_data, keywords)
-
-        # 若找不到，再用英文翻譯搜尋
-        if total_matches == 0:
-            english_query = translate_to_english(user_query)
-            summary, matched_details, total_matches = search_piping_spec(english_query, spec_data, keywords)
-
-        # ✅ 找到資料，回傳選擇項目提示
-        if total_matches > 0:
-            reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
-            return jsonify({
-                "fulfillmentText": reply,
-                "outputContexts": output_context({
-                    "await_spec_selection": True,
-                    "spec_options": list(matched_details.items())  # 序列化用
-                })
-            })
-
-        else:
-            try:
-                print("🔍 呼叫 GPT 回答...")
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
-                            {"role": "user", "content": user_query}],
-                    max_tokens=500,
-                    temperature=0.2,
-                    top_p=0.8
-                )
-                reply = response.choices[0].message.content.strip()
-            except Exception as e:
-                print("❌ GPT 呼叫失敗:", e)
-                reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-            return jsonify({
-                "fulfillmentText": reply
-            })
-            
-    # 在 intent 處理邏輯中的改動：
     if intent == "詢問熱處理規範":
         print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
-        # 若不在選擇階段，則執行搜尋
-        spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範", context_params)
+        spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
         return jsonify({
-            "fulfillmentText": spec_reply.get_json()["fulfillmentText"],  # 用 .get_json() 來提取 response 中的內容
+            "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
             "outputContexts": output_context({"await_heat_question": True})  # 設置上下文
         })
-
-    elif intent == "查詢規範2":
+    if intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
         category = extracted_data.get("category", context_params.get("category", ""))
@@ -507,7 +466,6 @@ def webhook():
     })
 
     elif intent == "詢問管線等級問題回答":
-        print("💬 由 GPT 回答規範內容...")
         try:
             print("💬 由 GPT 回答規範內容...")
             response = client.chat.completions.create(
@@ -561,32 +519,31 @@ def webhook():
             })
 
     elif intent == "Default Fallback Intent":
-        user_choice = user_query.strip()
-        spec_items = context_params.get("spec_options", [])
-        # ✅ 優先處理使用者選擇項目
-        if context_params.get("await_spec_selection") and user_choice.isdigit():
+        if context_params.get("await_spec_selection") and user_query.strip().isdigit():
+            print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
+            # ✅ 模擬觸發 User Selects Spec Item intent
+            user_choice = user_query.strip()
+            spec_items = context_params.get("spec_options", [])
             index = int(user_choice) - 1
             if 0 <= index < len(spec_items):
                 title, content = spec_items[index]
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({})  # 清除上下文
+                    "outputContexts": output_context({})
                 })
             else:
                 return jsonify({
                     "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）",
                     "outputContexts": output_context({"await_spec_selection": True})
                 })
-
-        # 🔁 若是詢問熱處理後續問題（非數字）
+       # 🔁 處理熱處理後續問題
         elif context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
             return generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
 
-        # 🔁 若是企業配管等其他規範問題
+        # 🔁 處理其他規範問題
         elif context_params.get("await_pipeclass_question"):
             try:
-                print(f"🔍 由 GPT 回答規範內容...")
                 print("💬 由 GPT 回答規範內容...")
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
@@ -605,7 +562,7 @@ def webhook():
 
             return jsonify({
                 "fulfillmentText": reply
-            }) 
+            })   
  
     else: 
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
