@@ -263,17 +263,14 @@ def webhook():
 
         if total_matches > 0:
             reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
-            
-            # 回傳 matched_details（可序列化）存在 context 中
-            return jsonify({
+            return {
                 "fulfillmentText": reply,
                 "outputContexts": output_context({
                     "await_spec_selection": True,
-                    "spec_options": list(matched_details.items())  # 傳成 list 才能序列化成 JSON
+                    "spec_options": list(matched_details.items())
                 })
-            })
+            }
         else:
-            # 🔁 fallback to GPT
             try:
                 print("🔍 呼叫 GPT 回答...")
                 response = client.chat.completions.create(
@@ -291,9 +288,9 @@ def webhook():
                 print("❌ GPT 呼叫失敗:", e)
                 reply = "抱歉，目前無法處理您的請求，請稍後再試。"
 
-            return jsonify({
+            return {
                 "fulfillmentText": reply
-            })
+            }
     
     if context_params.get("await_spec_selection"):
         user_choice = user_query.strip()
@@ -354,13 +351,15 @@ def webhook():
     elif intent == "詢問熱處理規範":
         print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
         spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
-        return jsonify({
-            "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
-            "outputContexts": output_context({
-                "await_heat_question": True,
-                "await_spec_selection": True
-            })
-        })
+
+        return jsonify(spec_reply)
+        # return jsonify({
+        #     "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
+        #     "outputContexts": output_context({
+        #         "await_heat_question": True,
+        #         "await_spec_selection": True
+        #     })
+        #})
     elif intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
