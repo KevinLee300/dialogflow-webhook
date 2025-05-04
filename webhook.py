@@ -237,15 +237,15 @@ def webhook():
             context_params = context.get("parameters", {})
 
     def output_context(params):
-        # if not params or params.get("await_spec_selection") is False:
-        #     # 清除上下文
-        #     return [{
-        #         "name": f"{session}/contexts/spec-context",
-        #         "lifespanCount": 0,  # 設置 lifespanCount 為 0 清除上下文
-        #         "parameters": {}
-        #     }]
-        # else:
-        #     # 保留上下文
+        if not params or params.get("await_spec_selection") is False:
+            # 清除上下文
+            return [{
+                "name": f"{session}/contexts/spec-context",
+                "lifespanCount": 0,  # 設置 lifespanCount 為 0 清除上下文
+                "parameters": {}
+            }]
+        else:
+            # 保留上下文
             return [{
                 "name": f"{session}/contexts/spec-context",
                 "lifespanCount": 5,  # 設置上下文的有效期
@@ -257,9 +257,9 @@ def webhook():
 
         summary, matched_details, total_matches = search_piping_spec(user_query, spec_data, keywords)
 
-        if total_matches == 0:
-            english_query = translate_to_english(user_query)
-            summary, matched_details, total_matches = search_piping_spec(english_query, spec_data, keywords)
+        # if total_matches == 0:
+        #     english_query = translate_to_english(user_query)
+        #     summary, matched_details, total_matches = search_piping_spec(english_query, spec_data, keywords)
 
         if total_matches > 0:
             reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
