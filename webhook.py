@@ -356,7 +356,10 @@ def webhook():
         spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
         return jsonify({
             "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
-            "outputContexts": output_context({"await_heat_question": True})  # 設置上下文
+            "outputContexts": output_context({
+                "await_heat_question": True,
+                "await_spec_selection": True
+            })
         })
     elif intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
