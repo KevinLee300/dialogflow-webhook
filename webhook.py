@@ -234,7 +234,7 @@ def webhook():
 
         # 讀取 context 中的參數
     context_params = {}
-    for context in query_result.get("outputContexts", []):
+    for context in req.get("queryResult", {}).get("outputContexts", []):
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
@@ -243,9 +243,33 @@ def webhook():
             "name": f"{session}/contexts/spec-context",
             "lifespanCount": 5,
             "parameters": params
-        }] 
+        }]
+    
+    if context_params.get("await_spec_selection"):
+        user_choice = user_query.strip()
+        spec_items = context_params.get("spec_options", [])
+
+        if user_choice.isdigit():
+            index = int(user_choice) - 1
+            if 0 <= index < len(spec_items):
+                title, content = spec_items[index]
+
+                return jsonify({
+                    "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
+                    "outputContexts": output_context({})  # ✅ 清除 context
+                })
+            else:
+                return jsonify({
+                    "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
+                })
+        else:
+            return jsonify({
+                "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
+            })
+    
     def generate_spec_reply(user_query, spec_data, spec_type_desc):
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
+
         summary, matched_details, total_matches = search_piping_spec(user_query, spec_data, keywords)
 
         if total_matches == 0:
@@ -285,6 +309,9 @@ def webhook():
             return jsonify({
                 "fulfillmentText": reply
             })
+        
+
+
     if intent == "詢問熱處理規範":
         # 設置 await_heat_question 到上下文
         spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
@@ -486,7 +513,7 @@ def webhook():
                 if 0 <= index < len(spec_items):
                     title, content = spec_items[index]
                     return jsonify({
-                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
+                        "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}"
                     })
                 else:
                     return jsonify({
