@@ -237,11 +237,20 @@ def webhook():
             context_params = context.get("parameters", {})
 
     def output_context(params):
-        return [{
-            "name": f"{session}/contexts/spec-context",
-            "lifespanCount": 5,
-            "parameters": params
-        }]
+        if not params or params.get("await_spec_selection") is False:
+            # 清除上下文
+            return [{
+                "name": f"{session}/contexts/spec-context",
+                "lifespanCount": 0,  # 設置 lifespanCount 為 0 清除上下文
+                "parameters": {}
+            }]
+        else:
+            # 保留上下文
+            return [{
+                "name": f"{session}/contexts/spec-context",
+                "lifespanCount": 5,  # 設置上下文的有效期
+                "parameters": params
+            }]
    
     def generate_spec_reply(user_query, spec_data, spec_type_desc):
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
@@ -305,7 +314,8 @@ def webhook():
 
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({"await_spec_selection": False})  # 清除上下文
+                    "outputContexts": output_context({"await_spec_selection": False})
+                        # 清除上下文
                 })
             else:
                 return jsonify({
