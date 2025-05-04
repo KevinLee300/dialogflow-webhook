@@ -246,15 +246,21 @@ def webhook():
     if context_params.get("await_spec_selection"):
         user_choice = user_query.strip()
         spec_items = context_params.get("spec_options", [])
+        if not spec_items:
+            # 如果上下文中沒有選項，清除上下文並退出
+            return jsonify({
+                "fulfillmentText": "上下文已過期，請重新查詢。",
+                "outputContexts": output_context({})
+            })
 
-        print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")  
-            
+        print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}") 
+
         if user_choice.isdigit():
             index = int(user_choice) - 1
             if 0 <= index < len(spec_items):
                 title, content = spec_items[index]
 
-                # 清除上下文，避免後續輸入再次進入該邏輯
+                # 清除上下文
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
                     "outputContexts": output_context({})  # 清除上下文
@@ -314,44 +320,13 @@ def webhook():
             })     
 
     if intent == "詢問熱處理規範":
-        print(f"🔍 Debug: intent={intent}, user_query={user_query}, context_params={context_params}")
-        # 設置 await_heat_question 到上下文
+        print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
         spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
         return jsonify({
             "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
             "outputContexts": output_context({"await_heat_question": True})
         })
-    elif context_params.get("await_spec_selection"):
-        user_choice = user_query.strip()
-        spec_items = context_params.get("spec_options", [])
 
-        if not spec_items:
-            # 如果上下文中沒有選項，清除上下文並退出
-            return jsonify({
-                "fulfillmentText": "上下文已過期，請重新查詢。",
-                "outputContexts": output_context({})
-            })
-
-        print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
-
-        if user_choice.isdigit():
-            index = int(user_choice) - 1
-            if 0 <= index < len(spec_items):
-                title, content = spec_items[index]
-
-                # 清除上下文
-                return jsonify({
-                    "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({})  # 清除上下文
-                })
-            else:
-                return jsonify({
-                    "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
-                })
-        else:
-            return jsonify({
-                "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
-            })
     elif intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
