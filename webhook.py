@@ -368,7 +368,10 @@ def webhook():
     elif intent == "詢問配管共同要求規範內容":
         print(f"🔍 Debug詢問配管共同要求規範內容: intent={intent}, user_query={user_query}, context_params={context_params}")
         spec_reply = generate_spec_reply(user_query, piping_specification, "詢問配管共同要求規範內容")
-        return jsonify(spec_reply)
+        return jsonify({
+            "fulfillmentText": spec_reply.get_json()["fulfillmentText"],
+            "outputContexts": output_context({"await_pipecommon_question": True})  # 設置上下文
+        })
 
     elif intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
