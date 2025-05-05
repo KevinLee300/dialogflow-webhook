@@ -363,7 +363,7 @@ def webhook():
                 title, content = spec_items[index]
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({})  # ✅ 清除 context
+                    "outputContexts": output_contexts({})  # ✅ 清除 context
                 })
             else:
                 return jsonify({
@@ -424,7 +424,7 @@ def webhook():
             link = query_download_link(category, source)
             return jsonify({
                 "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-                "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
+                "outputContexts": output_contexts({"category": category, "source": ""})  # 清除 source
             })
 
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
@@ -505,7 +505,7 @@ def webhook():
             else:
                 return jsonify({
                     "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
-                    "outputContexts": output_context({"source": user_query, "action": remembered_action})
+                    "outputContexts": output_contexts({"source": user_query, "action": remembered_action})
                 })
 
 
@@ -513,12 +513,12 @@ def webhook():
             # 清除 source
                 return jsonify({
                     "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
-                    "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
+                    "outputContexts": output_contexts({"category": category, "source": ""})  # 清除 source
                 })  
         
         return jsonify({
         "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐", "查詢油漆", "查詢鋼構", "查詢保溫"])],
-        "outputContexts": output_context({})
+        "outputContexts": output_contexts({})
     })
 
     elif intent == "詢問管線等級問題回答":
@@ -537,7 +537,7 @@ def webhook():
             reply = response.choices[0].message.content.strip()
             return jsonify({
             "fulfillmentText": reply,
-            "outputContexts": output_context({"await_pipeclass_question": True})
+            "outputContexts": output_contexts({"await_pipeclass_question": True})
         })
         except Exception as e:
             print("❌ GPT 呼叫失敗:", e)
@@ -545,7 +545,7 @@ def webhook():
 
         return jsonify({
             "fulfillmentText": reply,
-            "outputContexts": output_context({"await_pipeclass_question": True})
+            "outputContexts": output_contexts({"await_pipeclass_question": True})
         })     
    
 
