@@ -241,30 +241,21 @@ def webhook():
         if "spec-context" in context.get("name", ""):
             context_params = context.get("parameters", {})
 
-    # def output_context(params):
-    #     if not params or params.get("await_spec_selection") is False:
-    #         # 清除上下文
-    #         return [{
-    #             "name": f"{session}/contexts/spec-context",
-    #             "lifespanCount": 0,  # 設置 lifespanCount 為 0 清除上下文
-    #             "parameters": {}
-    #         }]
-    #     else:
-    #         # 保留上下文
-    #         return [{
-    #             "name": f"{session}/contexts/spec-context",
-    #             "lifespanCount": 5,  # 設置上下文的有效期
-    #             "parameters": params
-    #         }]
-    def output_contexts(context_dict):
-        contexts = []
-        for ctx_name, params in context_dict.items():
-            contexts.append({
-                "name": f"{session}/contexts/{ctx_name}",
-                "lifespanCount": 5 if params else 0,
-                "parameters": params or {}
-            })
-        return contexts
+    def output_context(params):
+        if not params or params.get("await_spec_selection") is False:
+            # 清除上下文
+            return [{
+                "name": f"{session}/contexts/spec-context",
+                "lifespanCount": 0,  # 設置 lifespanCount 為 0 清除上下文
+                "parameters": {}
+            }]
+        else:
+            # 保留上下文
+            return [{
+                "name": f"{session}/contexts/spec-context",
+                "lifespanCount": 5,  # 設置上下文的有效期
+                "parameters": params
+            }]
    
     def generate_spec_reply(user_query, spec_data, spec_type_desc):
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
@@ -278,56 +269,54 @@ def webhook():
         if total_matches > 0:
             reply = f"根據《{spec_type_desc}》，找到 {total_matches} 筆相關內容：\n{summary}\n請輸入對應的項目編號查看詳細內容（例如輸入 1）"
             
-            common_params = {
+            context = {
                 "await_spec_selection": True,
                 "spec_options": list(matched_details.items())
             }
-            # ✅ 將不同 context 統一輸出
-
-            context_dict = {
-                "spec-context": common_params
-            }
 
             if spec_data == piping_heat_treatment:
-                context_dict["await_heat_question"] = {}
+                context["await_heat_question"] = True
             elif spec_data == piping_specification:
-                context_dict["await_pipecommon_question"] = {}
+                context["await_pipecommon_question"] = True
 
             return {
                 "fulfillmentText": reply,
-                "outputContexts": output_contexts(context_dict)
+                "outputContexts": output_context({
+                    "await_spec_selection": True,
+                    "spec_options": list(matched_details.items())
+                })
             }
+        else:
+            try:
+                print("🔍 呼叫 GPT 回答...")
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
+                        {"role": "user", "content": user_query}
+                    ],
+                    max_tokens=500,
+                    temperature=0.2,
+                    top_p=0.8
+                )
+                reply = response.choices[0].message.content.strip()
+            except Exception as e:
+                print("❌ GPT 呼叫失敗:", e)
+                reply = "抱歉，目前無法處理您的請求，請稍後再試。"
 
-        try:
-            print("🔍 呼叫 GPT 回答...")
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
-                    {"role": "user", "content": user_query}
-                ],
-                max_tokens=500,
-                temperature=0.2,
-                top_p=0.8
-            )
-            reply = response.choices[0].message.content.strip()
-        except Exception as e:
-            print("❌ GPT 呼叫失敗:", e)
-            reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-        return {
-            "fulfillmentText": reply
-        }
-
+            return {
+                "fulfillmentText": reply
+            }
     
     if context_params.get("await_spec_selection"):
         user_choice = user_query.strip()
         spec_items = context_params.get("spec_options", [])
 
         if not spec_items:
+            # 如果上下文中沒有選項，清除上下文並退出
             return jsonify({
                 "fulfillmentText": "上下文已過期，請重新查詢。",
-                "outputContexts": output_contexts({"spec-context": None})
+                "outputContexts": output_context({})
             })
 
         print(f"🔍 Debug: user_choice={user_choice}, spec_items={spec_items}")
@@ -336,9 +325,11 @@ def webhook():
             index = int(user_choice) - 1
             if 0 <= index < len(spec_items):
                 title, content = spec_items[index]
+
+                # 清除上下文
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_contexts({"spec-context": None})  # 清除
+                    "outputContexts": output_context({})  # 清除上下文
                 })
             else:
                 return jsonify({
@@ -363,7 +354,7 @@ def webhook():
                 title, content = spec_items[index]
                 return jsonify({
                     "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_contexts({})  # ✅ 清除 context
+                    "outputContexts": output_context({})  # ✅ 清除 context
                 })
             else:
                 return jsonify({
@@ -424,7 +415,7 @@ def webhook():
             link = query_download_link(category, source)
             return jsonify({
                 "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-                "outputContexts": output_contexts({"category": category, "source": ""})  # 清除 source
+                "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
             })
 
         keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
@@ -505,7 +496,7 @@ def webhook():
             else:
                 return jsonify({
                     "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
-                    "outputContexts": output_contexts({"source": user_query, "action": remembered_action})
+                    "outputContexts": output_context({"source": user_query, "action": remembered_action})
                 })
 
 
@@ -513,12 +504,12 @@ def webhook():
             # 清除 source
                 return jsonify({
                     "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
-                    "outputContexts": output_contexts({"category": category, "source": ""})  # 清除 source
+                    "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
                 })  
         
         return jsonify({
         "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐", "查詢油漆", "查詢鋼構", "查詢保溫"])],
-        "outputContexts": output_contexts({})
+        "outputContexts": output_context({})
     })
 
     elif intent == "詢問管線等級問題回答":
@@ -537,7 +528,7 @@ def webhook():
             reply = response.choices[0].message.content.strip()
             return jsonify({
             "fulfillmentText": reply,
-            "outputContexts": output_contexts({"await_pipeclass_question": True})
+            "outputContexts": output_context({"await_pipeclass_question": True})
         })
         except Exception as e:
             print("❌ GPT 呼叫失敗:", e)
@@ -545,7 +536,7 @@ def webhook():
 
         return jsonify({
             "fulfillmentText": reply,
-            "outputContexts": output_contexts({"await_pipeclass_question": True})
+            "outputContexts": output_context({"await_pipeclass_question": True})
         })     
    
 
@@ -600,28 +591,7 @@ def webhook():
 
             return jsonify({
                 "fulfillmentText": reply
-            })
-        else:
-            try:
-                print("💬 由 GPT 回答規範內容...")
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"},
-                        {"role": "user", "content": user_query}
-                    ],
-                    max_tokens=500,
-                    temperature=0.2,
-                    top_p=0.8
-                )
-                reply = response.choices[0].message.content.strip()
-            except Exception as e:
-                print("❌ GPT 呼叫失敗:", e)
-                reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-            return jsonify({
-                "fulfillmentText": reply
-            })
+            })   
  
     else: 
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
