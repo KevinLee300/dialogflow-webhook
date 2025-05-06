@@ -430,7 +430,7 @@ def webhook():
             grade_code = match.group(1)
             if grade_code in grade_links:
                 return jsonify({
-                    "fulfillmentText": f"這是管線等級 {grade_code} 的對應連結：\n{grade_links[grade_code]}"
+                    "fulfillmentText": f"這是管線等級 {grade_code} 的對應連結：\n{type_links[grade_code]}"
                 })
             else:
                 return jsonify({
