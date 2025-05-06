@@ -451,7 +451,7 @@ def webhook():
         user_query = user_query.upper()  # 預先轉大寫，提高效率
 
         match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query)
-        match_m = re.search(r"(?:管支撐)?\s*M[-\s]*0*(\d{1,2})", user_query)
+        match_m = re.search(r"(?:管支撐)?\s*M[-\s]*0*(\d{1,2}[A-Z]?)", user_query)
 
         type_key = None
         m_key = None
@@ -472,8 +472,12 @@ def webhook():
                 })
 
         elif match_m:
-            m_id = match_m.group(1).zfill(2)
-            m_key = f"M{m_id}"
+            m_id = match_m.group(1)
+            if m_id[-1].isalpha():
+                m_key = f"M{m_id[:-1].zfill(2)}{m_id[-1]}"
+            else:
+                m_key = f"M{m_id.zfill(2)}"
+
             if m_key in type_links:
                 return jsonify({
                     "fulfillmentText": f"這是管支撐規範 {m_key} 的下載連結：\n{type_links[m_key]}"
