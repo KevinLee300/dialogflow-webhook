@@ -318,6 +318,7 @@ def webhook():
             if 0 <= index < len(spec_items):
                 title, content = spec_items[index]
 
+                # 判斷是否超過 300 字，若超過則呼叫 GPT 進行重點摘要
                 if len(content) > 300:
                     try:
                         print("📄 內容超過 300 字，呼叫 GPT 生成摘要中...")
@@ -332,20 +333,10 @@ def webhook():
                             top_p=0.8
                         )
                         summary = response.choices[0].message.content.strip()
-                        truncated = content[:300] + "..."
-                        reply_text = (
-                            f"📘 您選擇的是：{title}\n\n"
-                            f"📌 **重點整理：**\n{summary}\n\n"
-                            f"📄 **部分原始內容如下（僅顯示前 300 字）：**\n{truncated}\n\n"
-                            f"🔗 內容過長，如需完整內容請參考原始規範文件。"
-                        )
+                        reply_text = f"📘 您選擇的是：{title}\n\n📌 **重點整理：**\n{summary}\n\n📄 **原始內容如下：**\n{content}"
                     except Exception as e:
                         print("❌ GPT 摘要失敗:", e)
-                        reply_text = (
-                            f"📘 您選擇的是：{title}\n\n"
-                            f"📄 **部分原始內容如下（僅顯示前 300 字）：**\n{content[:300]}...\n\n"
-                            f"⚠️ 無法產生摘要，如需完整內容請參考原始規範文件。"
-                        )
+                        reply_text = f"📘 您選擇的是：{title}\n內容如下：\n{content}"
                 else:
                     reply_text = f"📘 您選擇的是：{title}\n內容如下：\n{content}"
 
@@ -353,16 +344,75 @@ def webhook():
                     "fulfillmentText": reply_text,
                     "outputContexts": output_context({})  # 清除上下文
                 })
-
             else:
                 return jsonify({
                     "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
                 })
-
         else:
             return jsonify({
                 "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
             })
+
+# if context_params.get("await_spec_selection"):
+#     user_choice = user_query.strip()
+#     spec_items = context_params.get("spec_options", [])
+
+#     if not spec_items:
+#         return jsonify({
+#             "fulfillmentText": "上下文已過期，請重新查詢。",
+#             "outputContexts": output_context({})
+#         })
+
+#     if user_choice.isdigit():
+#         index = int(user_choice) - 1
+#         if 0 <= index < len(spec_items):
+#             title, content = spec_items[index]
+
+#             if len(content) > 300:
+#                 try:
+#                     print("📄 內容超過 300 字，呼叫 GPT 生成摘要中...")
+#                     response = client.chat.completions.create(
+#                         model="gpt-3.5-turbo",
+#                         messages=[
+#                             {"role": "system", "content": "你是配管設計專家，請將以下配管規範內容進行條列式重點整理，保留原意並清楚簡明。"},
+#                             {"role": "user", "content": content}
+#                         ],
+#                         max_tokens=300,
+#                         temperature=0.3,
+#                         top_p=0.8
+#                     )
+#                     summary = response.choices[0].message.content.strip()
+#                     truncated = content[:300] + "..."
+#                     reply_text = (
+#                         f"📘 您選擇的是：{title}\n\n"
+#                         f"📌 **重點整理：**\n{summary}\n\n"
+#                         f"📄 **部分原始內容如下（僅顯示前 300 字）：**\n{truncated}\n\n"
+#                         f"🔗 內容過長，如需完整內容請參考原始規範文件。"
+#                     )
+#                 except Exception as e:
+#                     print("❌ GPT 摘要失敗:", e)
+#                     reply_text = (
+#                         f"📘 您選擇的是：{title}\n\n"
+#                         f"📄 **部分原始內容如下（僅顯示前 300 字）：**\n{content[:300]}...\n\n"
+#                         f"⚠️ 無法產生摘要，如需完整內容請參考原始規範文件。"
+#                     )
+#             else:
+#                 reply_text = f"📘 您選擇的是：{title}\n內容如下：\n{content}"
+
+#             return jsonify({
+#                 "fulfillmentText": reply_text,
+#                 "outputContexts": output_context({})  # 清除上下文
+#             })
+
+#         else:
+#             return jsonify({
+#                 "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
+#             })
+
+#     else:
+#         return jsonify({
+#             "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
+#         })
 
     if intent == "User Selects Spec Item":
         user_choice = user_query.strip()
