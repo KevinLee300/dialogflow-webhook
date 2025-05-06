@@ -414,37 +414,7 @@ def webhook():
 #             "fulfillmentText": "請輸入項目編號（例如 1 或 2），以查看詳細內容。"
 #         })
 
-    if intent == "User Selects Spec Item":
-        user_choice = user_query.strip()
-        spec_items = context_params.get("spec_options", [])
-
-        if not spec_items:
-            return jsonify({
-                "fulfillmentText": "目前沒有可供選擇的項目，請先提出查詢。"
-            })
-
-        if user_choice.isdigit():
-            index = int(user_choice) - 1
-            if 0 <= index < len(spec_items):
-                title, content = spec_items[index]
-                return jsonify({
-                    "fulfillmentText": f"📘 您選擇的是：{title}\n內容如下：\n{content}",
-                    "outputContexts": output_context({})  # ✅ 清除 context
-                })
-            else:
-                return jsonify({
-                    "fulfillmentText": f"請輸入有效的數字（例如 1~{len(spec_items)}）"
-                })
-        else:
-            return jsonify({
-                "fulfillmentText": "請輸入有效的項目編號，例如 1 或 2。"
-            })        
-    # elif intent == "詢問熱處理規範":
-    #     print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
-    #     spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
-
-    #     return jsonify(spec_reply)
-    elif intent == "啟動管線熱處理規範問答模式":
+    if intent == "啟動管線熱處理規範問答模式":
         return jsonify({
             "fulfillmentText": ("請問您想詢問哪段熱處理規範內容？\n例如：預熱溫度、PWHT溫度、保溫時間、冷卻方式等。"),
             "outputContexts": output_context({
@@ -478,24 +448,46 @@ def webhook():
         action = extracted_data.get("action", context_params.get("action", ""))
 
         # 檢查是否提到 TYPE 編號
-        match = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
-        if match:
-            type_id = match.group(1)
-            # 判斷是否有英文字尾
+        user_query = user_query.upper()  # 預先轉大寫，提高效率
+
+        match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query)
+        match_m = re.search(r"(?:管支撐)?\s*M[-\s]*0*(\d{1,2})", user_query)
+
+        type_key = None
+        m_key = None
+
+        if match_type:
+            type_id = match_type.group(1)
             if type_id[-1].isalpha():
                 type_key = f"TYPE{type_id[:-1].zfill(2)}{type_id[-1]}"
             else:
                 type_key = f"TYPE{type_id.zfill(2)}"
-
             if type_key in type_links:
-                link = type_links[type_key]
                 return jsonify({
-                    "fulfillmentText": f"這是管支撐規範（塑化）{type_key} 的下載連結：\n{link}"
+                    "fulfillmentText": f"這是管支撐規範（塑化）{type_key} 的下載連結：\n{type_links[type_key]}"
                 })
             else:
                 return jsonify({
                     "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
                 })
+
+        elif match_m:
+            m_id = match_m.group(1).zfill(2)
+            m_key = f"M{m_id}"
+            if m_key in type_links:
+                return jsonify({
+                    "fulfillmentText": f"這是管支撐規範 {m_key} 的下載連結：\n{type_links[m_key]}"
+                })
+            else:
+                return jsonify({
+                    "fulfillmentText": f"找不到 {m_key} 的對應連結，請確認是否輸入正確。"
+                })
+
+        else:
+            return jsonify({
+                "fulfillmentText": "請輸入正確的管支撐型式編號（如 TYPE01 或 M01）以查詢規範連結。"
+            })
+
             
         print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")  
         
