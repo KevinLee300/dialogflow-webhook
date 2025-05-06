@@ -436,7 +436,7 @@ def webhook():
         match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
         if match:
             grade_code = match.group(1)
-            if grade_code in grade_links:
+            if grade_code in type_links:
                 return jsonify({
                     "fulfillmentText": f"這是管線等級 {grade_code} 的對應連結：\n{type_links[grade_code]}"
                 })
@@ -689,7 +689,7 @@ def webhook():
             match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
             if match:
                 grade_code = match.group(1)
-                if grade_code in grade_links:
+                if grade_code in type_links:
                     return jsonify({
                         "fulfillmentText": f"這是管線等級 {grade_code} 的對應連結：\n{type_links[grade_code]}"
                     })
