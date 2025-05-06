@@ -422,8 +422,15 @@ def webhook():
             })
         })
     elif intent == "請輸入管線等級名稱":
-        user_query = req.get("queryResult", {}).get("queryText", "").upper()
+        return jsonify({
+                "fulfillmentText": ("請輸入管線等級（如 A012、B012、A144N 等）以查詢對應連結。"),
+                "outputContexts": output_context({
+                "await_pipinclass_download": True,                
+            })
+        })
 
+    elif intent == "下載管線等級":
+        user_query = req.get("queryResult", {}).get("queryText", "").upper()
     # 比對：1 個英文字母 + 3 位數字 + 可選的英文字母（如 A012、A144N）
         match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
         if match:
@@ -673,6 +680,26 @@ def webhook():
             print("🔄 重新路由到配管共同規範")
             spec_reply = generate_spec_reply(user_query, piping_specification, "詢問熱處理規範")
             return jsonify(spec_reply)
+
+        elif context_params.get("await_pipinclass_download"):
+            user_query = req.get("queryResult", {}).get("queryText", "").upper()
+
+        # 比對：1 個英文字母 + 3 位數字 + 可選的英文字母（如 A012、A144N）
+            match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
+            if match:
+                grade_code = match.group(1)
+                if grade_code in grade_links:
+                    return jsonify({
+                        "fulfillmentText": f"這是管線等級 {grade_code} 的對應連結：\n{type_links[grade_code]}"
+                    })
+                else:
+                    return jsonify({
+                        "fulfillmentText": f"找不到管線等級 {grade_code} 的連結，請確認是否輸入正確。"
+                    })
+            else:
+                return jsonify({
+                    "fulfillmentText": "請輸入正確的管線等級（如 A012、B012、A144N 等）以查詢對應連結。"
+                })
 
         # 🔁 處理其他規範問題
         elif context_params.get("await_pipeclass_question"):
