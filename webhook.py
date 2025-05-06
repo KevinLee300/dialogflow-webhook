@@ -364,14 +364,12 @@ def webhook():
             return jsonify({
                 "fulfillmentText": "請輸入有效的項目編號，例如 1 或 2。"
             })        
-    elif intent == "詢問熱處理規範":
-        print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
-        spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
+    # elif intent == "詢問熱處理規範":
+    #     print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
+    #     spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
 
-        return jsonify(spec_reply)
+    #     return jsonify(spec_reply)
     elif intent == "詢問熱啟動管線熱處理規範問答模式":
-        print(f"🔍 Debug熱處理: intent={intent}, user_query={user_query}, context_params={context_params}")
-        spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
 
         return jsonify({
             "fulfillmentText": f"請問您想詢問哪段熱處理規範內容?例如:預熱溫度、PWHT溫度、保溫時間、冷卻方式等。",
