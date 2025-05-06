@@ -430,6 +430,7 @@ def webhook():
         })
 
     elif intent == "下載管線等級":
+        extracted_data = extract_from_query(user_query)
         user_query = req.get("queryResult", {}).get("queryText", "").upper()
     # 比對：1 個英文字母 + 3 位數字 + 可選的英文字母（如 A012、A144N）
         match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
@@ -682,8 +683,8 @@ def webhook():
             return jsonify(spec_reply)
 
         elif context_params.get("await_pipinclass_download"):
+            extracted_data = extract_from_query(user_query)
             user_query = req.get("queryResult", {}).get("queryText", "").upper()
-
         # 比對：1 個英文字母 + 3 位數字 + 可選的英文字母（如 A012、A144N）
             match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
             if match:
