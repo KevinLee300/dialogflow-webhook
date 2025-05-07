@@ -730,6 +730,27 @@ def webhook():
 
             return jsonify({
                 "fulfillmentText": reply
+            })
+        else :
+            try:
+                print("💬 由 GPT 回答規範內容...")
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"},
+                        {"role": "user", "content": user_query}
+                    ],
+                    max_tokens=500,
+                    temperature=0.2,
+                    top_p=0.8
+                )
+                reply = response.choices[0].message.content.strip()
+            except Exception as e:
+                print("❌ GPT 呼叫失敗:", e)
+                reply = "抱歉，目前無法處理您的請求，請稍後再試。"
+
+            return jsonify({
+                "fulfillmentText": reply
             })   
  
     else: 
