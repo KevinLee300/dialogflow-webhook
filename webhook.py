@@ -479,7 +479,7 @@ def webhook():
 
         if "TYPE" in user_query or re.search(r"\bM[-\s]*\d+", user_query):
             match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
-            match_m = re.search(r"(?:管支撐\s*)?\bM[-\s]*0*(\d{1,2}[A-Z]?)\b", user_query.upper())
+            match_m = re.search(r"(?:管支撐)?\s*M[-\s]?0*(\d{1,2}[A-Z]?)", user_query.upper())
 
             if match_type:
                 type_id = match_type.group(1)
