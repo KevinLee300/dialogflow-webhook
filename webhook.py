@@ -483,7 +483,7 @@ def webhook():
             user_query = re.sub(r"\s+", " ", user_query).strip()  # 移除多餘空白
             match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query)
             match_m = re.search(r"(?:管支撐[-\s]*)?M[-\s]*0*(\d{1,2}[A-Z]?)", user_query)
-            match_loose_type = re.search(r"(?:查|看)?\s*(?:TYPE|管支撐)?[-\s]*0*(\d{1,3}[A-Z]?)型?", user_query)
+            match_generic = re.search(r"(?:查|看)?\s*([MT]?)[-\s]*0*(\d{1,3}[A-Z]?)型?", user_query)
 
             if match_type:
                 type_id = match_type.group(1)
@@ -524,22 +524,27 @@ def webhook():
                     return jsonify({
                         "fulfillmentText": f"找不到 {m_key} 的對應連結，請確認是否輸入正確。"
                     })
-            elif match_m:
-                m_id = match_m.group(1)
-                if m_id[-1].isalpha():
-                    num_part = m_id[:-1].zfill(2) if m_id[:-1] else "00"
-                    alpha_part = m_id[-1]
-                    m_key = f"M{num_part}{alpha_part}"
+            elif match_generic:
+                prefix, num = match_generic.groups()
+                prefix = prefix or "TYPE"  # 預設當作 M 編號處理
+                # 補零處理：含英文字尾時處理方式不同
+                if num[-1].isalpha():
+                    num_part = num[:-1].zfill(2) if num[:-1] else "00"
+                    alpha_part = num[-1]
+                    key = f"{prefix}{num_part}{alpha_part}"
                 else:
-                    m_key = f"M{m_id.zfill(2)}"
+                    key = f"{prefix}{num.zfill(2)}"
 
-                if m_key in type_links:
+                if key in type_links:
                     return jsonify({
-                        "fulfillmentText": f"這是管支撐規範 {m_key} 的下載連結：\n{type_links[m_key]}"
+                        "fulfillmentText": (
+                            f"這是管支撐規範 {key} 的下載連結：\n{type_links[key]}\n\n"
+                            f"💡 如需查詢其他，請輸入管支撐 M54 或 TYPE54。"
+                        )
                     })
                 else:
                     return jsonify({
-                        "fulfillmentText": f"找不到 {m_key} 的對應連結，請確認是否輸入正確。"
+                        "fulfillmentText": f"找不到 {key} 的對應連結，請確認是否輸入正確。"
                     })
             else:
                 return jsonify({
