@@ -480,8 +480,9 @@ def webhook():
         if "TYPE" in user_query or re.search(r"\bM[-\s]*\d+", user_query):
             # 統一字串處理（大小寫、空白）
             user_query = user_query.upper().replace("　", " ")  # 全形空白變半形
+            user_query = re.sub(r"\s+", " ", user_query).strip()  # 移除多餘空白
             match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query)
-            match_m = re.search(r"(?:管支撐\s*)?M[\s-]*0*(\d{1,2}[A-Z]?)", user_query)
+            match_m = re.search(r"(?:管支撐[-\s]*)?M[-\s]*0*(\d{1,2}[A-Z]?)", user_query)
 
             if match_type:
                 type_id = match_type.group(1)
@@ -496,10 +497,7 @@ def webhook():
 
                 if type_key in type_links:
                     return jsonify({
-                        "fulfillmentText": (
-                            f"這是管支撐規範 {type_key} 的下載連結：\n{type_links[type_key]}\n\n"
-                            f"💡 如需下載其他管支撐規範，請輸入 TYPE + 編號（例如 TYPE42 或 管支撐 M-42）即可取得對應連結。"
-                        )
+                        "fulfillmentText": f"這是管支撐規範 {type_key} 的下載連結：\n{type_links[type_key]}"
                     })
                 else:
                     return jsonify({
