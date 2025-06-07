@@ -4,6 +4,12 @@ import os
 from openai import OpenAI
 import json
 import re
+from datetime import datetime, timedelta
+
+# 儲存使用者對話歷史，格式為 {session_id: {"messages": [...], "last_seen": datetime}}
+session_histories = {}
+MAX_HISTORY = 5  # 最多紀錄 5 輪（user + assistant）
+SESSION_TIMEOUT = timedelta(minutes=5)
 
 app = Flask(__name__)
 
@@ -478,12 +484,8 @@ def webhook():
         user_query = user_query.upper()  # 預先轉大寫，提高效率
 
         if "TYPE" in user_query or re.search(r"\bM[-\s]*\d+", user_query):
-            # 統一字串處理（大小寫、空白）
-            user_query = user_query.upper().replace("　", " ")  # 全形空白變半形
-            user_query = re.sub(r"\s+", " ", user_query).strip()  # 移除多餘空白
-            match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query)
-            match_m = re.search(r"(?:管支撐[-\s]*)?M[-\s]*0*(\d{1,2}[A-Z]?)", user_query)
-            match_generic = re.search(r"(?:查|看)?\s*([MT]?)[-\s]*0*(\d{1,3}[A-Z]?)型?", user_query)
+            match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
+            match_m = re.search(r"(?:管支撐\s*)?M[-\s]*0*(\d{1,2}[A-Z]?)", user_query.upper())
 
             if match_type:
                 type_id = match_type.group(1)
@@ -498,7 +500,7 @@ def webhook():
 
                 if type_key in type_links:
                     return jsonify({
-                        "fulfillmentText": f"這是管支撐規範 {type_key} 的下載連結：\n{type_links[type_key]}"
+                        "fulfillmentText": f"這是管支撐規範（塑化）{type_key} 的下載連結：\n{type_links[type_key]}"
                     })
                 else:
                     return jsonify({
@@ -524,28 +526,7 @@ def webhook():
                     return jsonify({
                         "fulfillmentText": f"找不到 {m_key} 的對應連結，請確認是否輸入正確。"
                     })
-            elif match_generic:
-                prefix, num = match_generic.groups()
-                prefix = prefix or "TYPE"  # 預設當作 M 編號處理
-                # 補零處理：含英文字尾時處理方式不同
-                if num[-1].isalpha():
-                    num_part = num[:-1].zfill(2) if num[:-1] else "00"
-                    alpha_part = num[-1]
-                    key = f"{prefix}{num_part}{alpha_part}"
-                else:
-                    key = f"{prefix}{num.zfill(2)}"
 
-                if key in type_links:
-                    return jsonify({
-                        "fulfillmentText": (
-                            f"這是管支撐規範 {key} 的下載連結：\n{type_links[key]}\n\n"
-                            f"💡 如需查詢其他，請輸入管支撐 M54 或 TYPE54。"
-                        )
-                    })
-                else:
-                    return jsonify({
-                        "fulfillmentText": f"找不到 {key} 的對應連結，請確認是否輸入正確。"
-                    })
             else:
                 return jsonify({
                     "fulfillmentText": "請輸入正確的管支撐型式編號（如 TYPE01 或 M01）以查詢規範連結。"
@@ -687,6 +668,31 @@ def webhook():
 
     elif intent == "Default Fallback Intent":
 
+        # 讀取歷史（若超過 SESSION_TIMEOUT 則重置）
+        now = datetime.now()
+        session_data = session_histories.get(session, {"messages": [], "last_seen": now})
+        if now - session_data["last_seen"] > SESSION_TIMEOUT:
+            session_data["messages"] = []
+
+        history = session_data["messages"]
+
+        # 加入使用者輸入
+        history.append({"role": "user", "content": user_query})
+
+        # 限制歷史長度
+        if len(history) > MAX_HISTORY * 2:
+            history = history[-MAX_HISTORY * 2:]
+
+        # 是否需要提醒
+        user_reminder = ""
+        if len(history) >= MAX_HISTORY * 2:
+            user_reminder = "⚠️ 您的對話已超過 5 輪，為保持效能，建議整理問題或重新開始查詢。\n\n"
+
+        session_data["messages"] = history
+        session_data["last_seen"] = now
+        session_histories[session] = session_data
+
+        # 處理特定上下文邏輯（熱處理、共同規範、管線等級）
         if context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
             spec_reply = generate_spec_reply(user_query, piping_heat_treatment, "詢問熱處理規範")
@@ -732,6 +738,7 @@ def webhook():
                     top_p=0.8
                 )
                 reply = response.choices[0].message.content.strip()
+
             except Exception as e:
                 print("❌ GPT 呼叫失敗:", e)
                 reply = "抱歉，目前無法處理您的請求，請稍後再試。"
@@ -741,18 +748,22 @@ def webhook():
             })
         else :
             try:
-                print("💬 由 GPT 回答規範內容...")
+                print("💬 使用 GPT 與對話歷史回答規範問題...")
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"},
-                        {"role": "user", "content": user_query}
-                    ],
+                    messages=[{"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"}] + history,
                     max_tokens=500,
                     temperature=0.2,
                     top_p=0.8
                 )
-                reply = response.choices[0].message.content.strip()
+                reply = user_reminder + response.choices[0].message.content.strip()
+
+                # 將 GPT 回答加入歷史
+                history.append({"role": "assistant", "content": reply})
+                session_data["messages"] = history
+                session_data["last_seen"] = now
+                session_histories[session] = session_data
+
             except Exception as e:
                 print("❌ GPT 呼叫失敗:", e)
                 reply = "抱歉，目前無法處理您的請求，請稍後再試。"
