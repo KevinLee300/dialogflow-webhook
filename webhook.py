@@ -483,7 +483,7 @@ def webhook():
         # 檢查是否提到 TYPE 編號
         user_query = user_query.upper()  # 預先轉大寫，提高效率
 
-        if "TYPE" in user_query or re.search(r"\bM[-\s]*\d+", user_query):
+        if "TYPE" in user_query or re.search(r"M[-\s]*\d+", user_query):
             match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query.upper())
             match_m = re.search(r"(?:管支撐\s*)?M[-\s]*0*(\d{1,2}[A-Z]?)", user_query.upper())
 
@@ -633,7 +633,7 @@ def webhook():
                 })  
         
         return jsonify({
-        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別3333", ["查詢管支撐", "查詢油漆", "查詢鋼構", "查詢保溫"])],
+        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別-", ["查詢管支撐", "查詢油漆", "查詢鋼構", "查詢保溫"])],
         "outputContexts": output_context({})
     })
 
