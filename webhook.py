@@ -667,6 +667,17 @@ def webhook():
         if now - session_data["last_seen"] > SESSION_TIMEOUT:
             session_data["messages"] = []
 
+        # ✅ 檢查是否要重設對話
+        if user_query.strip() in ["重新開始", "reset", "重設對話", "重新來"]:
+            session_data["messages"] = []
+            session_data["last_seen"] = now
+            session_histories[session] = session_data
+
+            reply = {
+                "fulfillmentText": "✅ 對話已重置，請重新輸入您想查詢的規範或問題。",
+            }
+            return jsonify(reply)
+
         history = session_data["messages"]
 
         # 加入使用者輸入
@@ -679,7 +690,7 @@ def webhook():
         # 是否需要提醒
         user_reminder = ""
         if len(history) >= MAX_HISTORY * 2:
-            user_reminder = "⚠️ 您的對話已超過 5 輪，為保持效能，建議整理問題或重新開始查詢。\n\n"
+            user_reminder = "⚠️ 您的對話已超過 5 輪，為保持效能，建議整理問題請輸入重設對話。\n\n"
 
         session_data["messages"] = history
         session_data["last_seen"] = now
