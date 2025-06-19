@@ -754,10 +754,10 @@ def webhook():
             try:
                 print("💬 使用 GPT 與對話歷史回答規範問題...")
                 response = client.chat.completions.create(
-                    model="gpt-4o",
+                    model="gpt-3.5-turbo",
                     messages=[{"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"}] + history,
                     max_tokens=500,
-                    temperature=0.5,
+                    temperature=0.4,
                     top_p=1
                 )
                 reply = user_reminder + response.choices[0].message.content.strip()
