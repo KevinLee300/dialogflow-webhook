@@ -696,6 +696,16 @@ def webhook():
         session_data["last_seen"] = now
         session_histories[session] = session_data
 
+        system_prompt = """
+        你是配管設計專家，具有十年以上工業配管設計經驗，熟悉ASME、JIS、API等相關標準與施工規範。
+        回答時請保持專業且簡潔明瞭，避免過度冗長。
+        回答內容須具體且技術性強，並以正式且禮貌的語氣回覆。
+        如果問題超出規範範圍，請禮貌告知並建議相關查詢方向。
+        請避免提供與配管設計無關的資訊。
+        請在回答中盡量包含標準編號、法規條文或標準圖引用。
+        若使用專有名詞，請適當解釋以確保清晰易懂。
+        """
+
         # 處理特定上下文邏輯（熱處理、共同規範、管線等級）
         if context_params.get("await_heat_question"):
             print("🔄 重新路由到熱處理規範")
@@ -734,9 +744,9 @@ def webhook():
                 response = client.chat.completions.create(
                     model="gpt-4o",
                     messages=[
-                        {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"},
+                        {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_query}
-                    ],
+                    ]+ history,
                     max_tokens=500,
                     temperature=0.3,
                     top_p=1
@@ -754,11 +764,13 @@ def webhook():
             try:
                 print("💬 使用 GPT 與對話歷史回答規範問題...")
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"}] + history,
-                    max_tokens=500,
+                    model="gpt-4o",
+                    messages=[{"role": "system", "content": system_prompt}] + history,
+                    max_tokens=600,
                     temperature=0.4,
-                    top_p=1
+                    top_p=1,                                
+                    frequency_penalty=0.1,
+                    presence_penalty=0
                 )
                 reply = user_reminder + response.choices[0].message.content.strip()
 
