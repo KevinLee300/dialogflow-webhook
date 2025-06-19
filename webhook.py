@@ -182,12 +182,8 @@ def payload_with_buttons(text, options):
 
 def query_download_link(category, source):
     links = {
-        ("油漆", "塑化"): "https://tinyurl.com/yp59mpat",
-        ("油漆", "企業"): "https://tinyurl.com/c73ajvpt\n保溫層下方油漆防蝕暫行辦法\nhttps://tinyurl.com/2s3me8jh",
         ("管支撐", "塑化"): "https://tinyurl.com/5vk67ywh",
         ("管支撐", "企業"): "https://tinyurl.com/msxhmnha",
-        ("鋼構", "塑化"): "https://tinyurl.com/3tdcxe5v",
-        ("鋼構", "企業"): "https://tinyurl.com/mvb9yzhw",
         ("保溫", "企業"): "https://tinyurl.com/2s4cb5cn",
         ("保溫", "塑化"): "保溫規範請參考企業規範\nhttps://tinyurl.com/2s4cb5cn"
     }
@@ -197,9 +193,6 @@ def query_download_link(category, source):
 category_keywords = {
         "管支撐": ["管支撐", "支撐", "管道支撐","PIPING SUPPORT","SUPPORT"],
         "油漆": ["油漆", "塗裝", "漆", "涂料", "painting"],
-        "保溫": ["保溫", "隔熱", "熱保", "隔熱保溫"],
-        "鋼構": ["鋼構", "鋼結構", "結構鋼", "鋼架", "結構", "結構體",
-            "鋼板", "鋼鐵板", "鋼梁", "鋼樑", "鋼結構規範", "鋼構規範", "結構設計規範"],
     } 
 action_keywords = {
     "詢問內容": ["查詢", "查", "詢問", "找"],
@@ -291,14 +284,14 @@ def webhook():
             try:
                 print("🔍 呼叫 GPT 回答...")
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o",
                     messages=[
                         {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
                         {"role": "user", "content": user_query}
                     ],
-                    max_tokens=500,
-                    temperature=0.2,
-                    top_p=0.8
+                    max_tokens=350,
+                    temperature=0.4,
+                    top_p=1
                 )
                 reply = response.choices[0].message.content.strip()
             except Exception as e:
@@ -334,7 +327,7 @@ def webhook():
                                 {"role": "system", "content": "你是配管設計專家，請將以下配管規範內容進行條列式重點整理，保留原意並清楚簡明。"},
                                 {"role": "user", "content": content}
                             ],
-                            max_tokens=300,
+                            max_tokens=500,
                             temperature=0.3,
                             top_p=0.8
                         )
@@ -548,7 +541,7 @@ def webhook():
             if not category:
                 print(f"🔍 Debug: category={category}, source={source}, action={action}")
                 return jsonify({
-                    "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查管支撐", "查油漆", "查鋼構", "查保溫"])],
+                    "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查管支撐","查保溫"])],
                     "outputContexts": [{
                         "name": f"{session}/contexts/spec-context",
                         "lifespanCount": 5,
@@ -620,7 +613,7 @@ def webhook():
                     })
             else:
                 return jsonify({
-                    "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "油漆", "鋼構", "保溫"])],
+                    "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "保溫"])],
                     "outputContexts": output_context({"source": user_query, "action": remembered_action})
                 })
 
@@ -641,14 +634,14 @@ def webhook():
         try:
             print("💬 由 GPT 回答規範內容...")
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",  # 建議使用 gpt-4 或 gpt-4-turbo
+                model="gpt-4o",  # 建議使用 gpt-4 或 gpt-4-turbo
                 messages=[
                     {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題，請根據使用者的問題提供清楚簡潔的回答。"},
                     {"role": "user", "content": user_query}
                 ],
-                max_tokens=500,
-                temperature=0.2,
-                top_p=0.8
+                max_tokens=400,
+                temperature=0.4,
+                top_p=1
             )
             reply = response.choices[0].message.content.strip()
             return jsonify({
@@ -728,14 +721,14 @@ def webhook():
             try:
                 print("💬 由 GPT 回答規範內容...")
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o",
                     messages=[
                         {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"},
                         {"role": "user", "content": user_query}
                     ],
                     max_tokens=500,
-                    temperature=0.2,
-                    top_p=0.8
+                    temperature=0.3,
+                    top_p=1
                 )
                 reply = response.choices[0].message.content.strip()
 
@@ -750,11 +743,11 @@ def webhook():
             try:
                 print("💬 使用 GPT 與對話歷史回答規範問題...")
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o",
                     messages=[{"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題。"}] + history,
                     max_tokens=500,
-                    temperature=0.2,
-                    top_p=0.8
+                    temperature=0.5,
+                    top_p=1
                 )
                 reply = user_reminder + response.choices[0].message.content.strip()
 
