@@ -749,7 +749,8 @@ def webhook():
                     ]+ history,
                     max_tokens=500,
                     temperature=0.3,
-                    top_p=1
+                    top_p=1,
+                    timeout=20
                 )
                 reply = response.choices[0].message.content.strip()
 
@@ -770,7 +771,8 @@ def webhook():
                     temperature=0.4,
                     top_p=1,                                
                     frequency_penalty=0.1,
-                    presence_penalty=0
+                    presence_penalty=0,
+                    timeout=20  # 若支援的話設定
                 )
                 reply = user_reminder + response.choices[0].message.content.strip()
 
