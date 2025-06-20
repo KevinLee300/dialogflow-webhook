@@ -2,3 +2,4 @@ flask
 openai
 fuzzywuzzy
 python-Levenshtein>=0.12.0
+line-bot-sdk
