@@ -327,7 +327,7 @@ def webhook():
                                 {"role": "system", "content": "你是配管設計專家，請將以下配管規範內容進行條列式重點整理，保留原意並清楚簡明。"},
                                 {"role": "user", "content": content}
                             ],
-                            max_tokens=500,
+                            max_tokens=400,
                             temperature=0.3,
                             top_p=0.8
                         )
@@ -686,10 +686,9 @@ def webhook():
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_query}
                     ]+ history,
-                    max_tokens=500,
+                    max_tokens=400,
                     temperature=0.3,
                     top_p=1,
-                    timeout=20
                 )
                 reply = response.choices[0].message.content.strip()
 
@@ -706,12 +705,11 @@ def webhook():
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "system", "content": system_prompt}] + history,
-                    max_tokens=600,
+                    max_tokens=400,
                     temperature=0.4,
                     top_p=1,                                
                     frequency_penalty=0.1,
                     presence_penalty=0,
-                    timeout=20  # 若支援的話設定
                 )
                 reply = user_reminder + response.choices[0].message.content.strip()
 
