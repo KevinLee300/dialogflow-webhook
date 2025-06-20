@@ -405,7 +405,7 @@ def webhook():
             })
         })
 
-    elif intent == "查詢管支撐及保溫規範":
+    elif intent == "查詢規範2":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
         category = extracted_data.get("category", context_params.get("category", ""))
