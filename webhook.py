@@ -398,7 +398,7 @@ def webhook():
             })
         })
 
-    elif intent == "查詢規範2":
+    elif intent == "管支撐規範":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
         category = extracted_data.get("category", context_params.get("category", ""))
@@ -456,62 +456,6 @@ def webhook():
                 return jsonify({
                     "fulfillmentText": "請輸入正確的管支撐型式編號（如 TYPE01 或 M01）以查詢規範連結。"
                 })
-            
-            flex_payload = {
-            "line": {
-                "altText": "請點選下載項目？",
-                "contents": {
-                    "type": "bubble",
-                    "body": {
-                        "type": "box",
-                        "layout": "vertical",
-                        "spacing": "md",
-                        "contents": [
-                            {
-                                "type": "text",
-                                "text": "📥 規範下載專區",
-                                "weight": "bold",
-                                "size": "sm",
-                                "wrap": True
-                            },
-                            {
-                                "type": "button",
-                                "style": "link",
-                                "action": {
-                                    "type": "uri",
-                                    "label": "📌 塑化-管支撐規範",
-                                    "uri": "https://tinyurl.com/5vk67ywh"
-                                }
-                            },
-                            {
-                                "type": "button",
-                                "style": "link",
-                                "action": {
-                                    "type": "uri",
-                                    "label": "📌 企業-管支撐規範",
-                                    "uri": "https://tinyurl.com/msxhmnha"
-                                }
-                            },
-                            {
-                                "type": "button",
-                                "style": "primary",
-                                "action": {
-                                    "type": "message",
-                                    "label": "獨立下載各別管支撐型式TYPE",
-                                    "text": "下載保溫材料施工技術指導書"
-                                }
-                            }
-                        ]
-                    }
-                },
-                "type": "flex"
-            }
-        }
-
-        return jsonify({
-            "fulfillmentMessages": [flex_payload],
-            "outputContexts": output_context({})  # 如有需要保留參數可修改
-        })
 
     elif intent == "詢問管線等級問題回答":
         try:
