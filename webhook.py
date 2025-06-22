@@ -399,11 +399,6 @@ def webhook():
         })
 
     elif intent == "管支撐規範":
-        # 統一取得參數：優先從 query 抽出，否則使用 context 中值
-        extracted_data = extract_from_query(user_query)
-        category = extracted_data.get("category", context_params.get("category", ""))
-        source = extracted_data.get("source", context_params.get("source", ""))
-        action = extracted_data.get("action", context_params.get("action", ""))
 
         # 檢查是否提到 TYPE 編號
         user_query = user_query.upper()  # 預先轉大寫，提高效率
