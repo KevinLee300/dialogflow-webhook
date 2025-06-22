@@ -406,50 +406,50 @@ def webhook():
         match_type = re.search(r"(?:TY(?:PE)?)[-\s]*0*(\d{1,3}[A-Z]?)", user_query_upper)
         match_m = re.search(r"(?:管支撐\s*)?M[-\s]*0*(\d{1,2}[A-Z]?)", user_query_upper)
 
-            if match_type:
-                type_id = match_type.group(1)
-                
-                # 檢查是否有字母尾碼，並根據情況補零
-                if type_id[-1].isalpha():
-                    num_part = type_id[:-1].zfill(2) if type_id[:-1] else "00"
-                    alpha_part = type_id[-1]
-                    type_key = f"TYPE{num_part}{alpha_part}"
-                else:
-                    type_key = f"TYPE{type_id.zfill(2)}"
+        if match_type:
+            type_id = match_type.group(1)
+            
+            # 檢查是否有字母尾碼，並根據情況補零
+            if type_id[-1].isalpha():
+                num_part = type_id[:-1].zfill(2) if type_id[:-1] else "00"
+                alpha_part = type_id[-1]
+                type_key = f"TYPE{num_part}{alpha_part}"
+            else:
+                type_key = f"TYPE{type_id.zfill(2)}"
 
-                if type_key in type_links:
-                    return jsonify({
-                        "fulfillmentText": f"這是管支撐規範（塑化）{type_key} 的下載連結：\n{type_links[type_key]}"
-                    })
-                else:
-                    return jsonify({
-                        "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
-                    })
-
-            elif match_m:
-                m_id = match_m.group(1)
-                
-                # 檢查是否有字母尾碼，並根據情況補零
-                if m_id[-1].isalpha():
-                    num_part = m_id[:-1].zfill(2) if m_id[:-1] else "00"
-                    alpha_part = m_id[-1]
-                    m_key = f"M{num_part}{alpha_part}"
-                else:
-                    m_key = f"M{m_id.zfill(2)}"
-
-                if m_key in type_links:
-                    return jsonify({
-                        "fulfillmentText": f"這是管支撐規範 {m_key} 的下載連結：\n{type_links[m_key]}"
-                    })
-                else:
-                    return jsonify({
-                        "fulfillmentText": f"找不到 {m_key} 的對應連結，請確認是否輸入正確。"
-                    })
-
+            if type_key in type_links:
+                return jsonify({
+                    "fulfillmentText": f"這是管支撐規範（塑化）{type_key} 的下載連結：\n{type_links[type_key]}"
+                })
             else:
                 return jsonify({
-                    "fulfillmentText": "請輸入正確的管支撐型式編號（如 TYPE01 或 M01）以查詢規範連結。"
+                    "fulfillmentText": f"找不到 {type_key} 的對應連結，請確認是否輸入正確。"
                 })
+
+        elif match_m:
+            m_id = match_m.group(1)
+            
+            # 檢查是否有字母尾碼，並根據情況補零
+            if m_id[-1].isalpha():
+                num_part = m_id[:-1].zfill(2) if m_id[:-1] else "00"
+                alpha_part = m_id[-1]
+                m_key = f"M{num_part}{alpha_part}"
+            else:
+                m_key = f"M{m_id.zfill(2)}"
+
+            if m_key in type_links:
+                return jsonify({
+                    "fulfillmentText": f"這是管支撐規範 {m_key} 的下載連結：\n{type_links[m_key]}"
+                })
+            else:
+                return jsonify({
+                    "fulfillmentText": f"找不到 {m_key} 的對應連結，請確認是否輸入正確。"
+                })
+
+        else:
+            return jsonify({
+                "fulfillmentText": "請輸入正確的管支撐型式編號（如 TYPE01 或 M01）以查詢規範連結。"
+            })
 
     elif intent == "詢問管線等級問題回答":
         try:
