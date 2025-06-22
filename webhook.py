@@ -399,11 +399,6 @@ def webhook():
         })
 
     elif intent == "查詢規範2":
-        # 統一取得參數：優先從 query 抽出，否則使用 context 中值
-        extracted_data = extract_from_query(user_query)
-        category = extracted_data.get("category", context_params.get("category", ""))
-        source = extracted_data.get("source", context_params.get("source", ""))
-        action = extracted_data.get("action", context_params.get("action", ""))
 
         # 檢查是否提到 TYPE 編號
         user_query = user_query.upper()  # 預先轉大寫，提高效率
@@ -513,19 +508,6 @@ def webhook():
             "outputContexts": output_context({})  # 如有需要保留參數可修改
         })
 
-
-        if user_query == "詢問內容":
-            # 清除 source
-                return jsonify({
-                    "fulfillmentText": "請問您想詢問哪段規範內容？例如：測試、清洗、壓力等。",
-                    "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
-                })  
-        
-        return jsonify({
-        "fulfillmentMessages": [payload_with_buttons("請選擇規範類別-", ["查詢管支撐", "查詢保溫"])],
-        "outputContexts": output_context({})
-    })
-
     elif intent == "詢問管線等級問題回答":
         try:
             print("💬 由 GPT 回答規範內容...")
@@ -586,7 +568,7 @@ def webhook():
         # 是否需要提醒
         user_reminder = ""
         if len(history) >= MAX_HISTORY * 2:
-            user_reminder = "⚠️ 您的對話已超過 5 輪，為保持效能，建議整理問題請輸入重設對話。\n\n"
+            user_reminder = "⚠️ 您的對話已超過 5 輪，為保持效能，請輸入"重設對話"。\n\n"
 
         session_data["messages"] = history
         session_data["last_seen"] = now
