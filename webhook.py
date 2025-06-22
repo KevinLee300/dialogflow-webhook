@@ -160,8 +160,6 @@ def search_piping_spec(question, spec_data, keywords, threshold=70):
  """
 
 
-
-
 #LINE 按鈕程式
 def payload_with_buttons(text, options):    
     return {
@@ -183,17 +181,12 @@ def payload_with_buttons(text, options):
 def query_download_link(category, source):
     links = {
         ("管支撐", "塑化"): "https://tinyurl.com/5vk67ywh",
-        ("管支撐", "企業"): "https://tinyurl.com/msxhmnha",
-        ("保溫", "企業"): "https://tinyurl.com/2s4cb5cn",
-        ("保溫", "塑化"): "保溫規範請參考企業規範\nhttps://tinyurl.com/2s4cb5cn"
+        ("管支撐", "企業"): "https://tinyurl.com/msxhmnha"
     }
     return links.get((category, source), "查無對應的下載連結")
 
     # 定義 categories_map，類似 actions_map 的結構
-category_keywords = {
-        "管支撐": ["管支撐", "支撐", "管道支撐","PIPING SUPPORT","SUPPORT"],
-        "保溫": ["保溫", "insulation", "岩棉", "氣膠體", "保溫材", "PIR"],
-    } 
+category_keywords = {        "管支撐": ["管支撐", "支撐", "管道支撐","PIPING SUPPORT","SUPPORT"],    } 
 action_keywords = {
     "詢問內容": ["查詢", "查", "詢問", "找"],
     "下載": ["下載", "給我", "提供"],}
@@ -463,98 +456,62 @@ def webhook():
                 return jsonify({
                     "fulfillmentText": "請輸入正確的管支撐型式編號（如 TYPE01 或 M01）以查詢規範連結。"
                 })
-
             
-        print(f"🧩 抽取結果: category={category}, source={source}, action={action}, intent={intent}")  
-        
-        # ✅ 加入自動下載條件
-        if action == "下載" and category and source:
-            link = query_download_link(category, source)
-            return jsonify({
-                "fulfillmentText": f"這是 {category}（{source}）規範的下載連結：\n{link}",
-                "outputContexts": output_context({"category": category, "source": ""})  # 清除 source
-            })
-
-        keywords = {"規範", "資料", "標準圖", "查詢", "我要查", "查"}
-        if any(k in user_query for k in keywords):
-            if not category:
-                print(f"🔍 Debug: category={category}, source={source}, action={action}")
-                return jsonify({
-                    "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["查管支撐","查保溫"])],
-                    "outputContexts": [{
-                        "name": f"{session}/contexts/spec-context",
-                        "lifespanCount": 5,
-                        "parameters": {"source": source, "action": action}
-                    }]
-                })
-            elif not source:
-                return jsonify({
-                    "fulfillmentMessages": [payload_with_buttons(f"{category}：請選擇來源類型", ["企業", "塑化"])],
-                    "outputContexts": [{
-                        "name": f"{session}/contexts/spec-context",
-                        "lifespanCount": 5,
-                        "parameters": {"category": category, "action": action}
-                    }]
-                })
-            else:
-                return jsonify({
-                    "fulfillmentMessages": [
-                        payload_with_buttons(
-                            f"{category}（{user_query}）：請選擇下一步",
-                            [f"下載{category}（{user_query}）", "詢問內容"]
-                        )
-                    ],
-                    "outputContexts": [{
-                        "name": f"{session}/contexts/spec-context",
-                        "lifespanCount": 5,
-                        "parameters": {"category": category, "source": source}
-                    }]  
-                })
-        if user_query in ["企業", "塑化"]:
-            # 從上下文中提取 category 和 action
-            remembered_category = context_params.get("category", "")
-            remembered_action = context_params.get("action", "")
-            
-            print(f"🔍 Debug: remembered_category={remembered_category}, remembered_action={remembered_action}, user_query={user_query}")
-            
-            if remembered_category:
-                if remembered_action == "下載":
-                    link = query_download_link(remembered_category, user_query)
-                    return jsonify({
-                        "fulfillmentText": f"這是 {remembered_category}（{user_query}）規範的下載連結：\n{link}",
-                        "outputContexts": [{
-                            "name": f"{session}/contexts/spec-context",
-                            "lifespanCount": 5,
-                            "parameters": {
-                                "category": remembered_category,
-                                "source": user_query,
-                                "action": remembered_action
+            flex_payload = {
+            "line": {
+                "altText": "請點選下載項目？",
+                "contents": {
+                    "type": "bubble",
+                    "body": {
+                        "type": "box",
+                        "layout": "vertical",
+                        "spacing": "md",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "📥 規範下載專區",
+                                "weight": "bold",
+                                "size": "sm",
+                                "wrap": True
+                            },
+                            {
+                                "type": "button",
+                                "style": "link",
+                                "action": {
+                                    "type": "uri",
+                                    "label": "📌 塑化-管支撐規範",
+                                    "uri": "https://tinyurl.com/5vk67ywh"
+                                }
+                            },
+                            {
+                                "type": "button",
+                                "style": "link",
+                                "action": {
+                                    "type": "uri",
+                                    "label": "📌 企業-管支撐規範",
+                                    "uri": "https://tinyurl.com/msxhmnha"
+                                }
+                            },
+                            {
+                                "type": "button",
+                                "style": "primary",
+                                "action": {
+                                    "type": "message",
+                                    "label": "獨立下載各別管支撐型式TYPE",
+                                    "text": "下載保溫材料施工技術指導書"
+                                }
                             }
-                        }]
-                    })
-                else:
-                    return jsonify({
-                        "fulfillmentMessages": [
-                            payload_with_buttons(
-                                f"{remembered_category}（{user_query}）：請選擇下一步",
-                                [f"下載{remembered_category}（{user_query}）", "詢問內容"]
-                            )
-                        ],
-                        "outputContexts": [{
-                            "name": f"{session}/contexts/spec-context",
-                            "lifespanCount": 5,
-                            "parameters": {
-                                "category": remembered_category,
-                                "source": user_query,
-                                "action": remembered_action
-                            }
-                        }]
-                    })
-            else:
-                return jsonify({
-                    "fulfillmentMessages": [payload_with_buttons("請選擇規範類別", ["管支撐", "保溫"])],
-                    "outputContexts": output_context({"source": user_query, "action": remembered_action})
-                })
+                        ]
+                    }
+                },
+                "type": "flex"
+            }
+        }
+
+        return jsonify({
+            "fulfillmentMessages": [flex_payload],
+            "outputContexts": output_context({})  # 如有需要保留參數可修改
+        })
 
 
         if user_query == "詢問內容":
