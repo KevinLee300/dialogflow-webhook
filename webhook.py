@@ -164,6 +164,8 @@ def webhook():
         return jsonify({"fulfillmentText": "請求格式錯誤，請確保 Content-Type 為 application/json。"}) 
     
     user_id = req.get("originalDetectIntentRequest", {}).get("payload", {}).get("data", {}).get("source")
+
+    print(f"🔍 解析取得的 user_id: {user_id}")
     
     if user_id:
         push_to_line(user_id, "這是從 GPT 主動推播給您的訊息")
