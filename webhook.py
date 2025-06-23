@@ -608,7 +608,7 @@ def webhook():
             try:
                 print("💬 使用 GPT 與對話歷史回答規範問題...")
                 reply = {"fulfillmentText": "🧠 我正在思考中，請稍後幾秒..."}
-                Thread(target=process_gpt_logic, args=(user_query, session, intent)).start()
+                Thread(target=process_gpt_logic, args=(user_query, user_id, intent)).start()
                 return jsonify(reply)
 
                 # response = client.chat.completions.create(
@@ -656,7 +656,7 @@ def webhook():
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
 
-def process_gpt_logic(user_query, session, intent):
+def process_gpt_logic(user_query, user_id, intent):
     try:
         print("💬 使用 GPT 處理問題...")
         system_prompt = """
@@ -689,10 +689,10 @@ def process_gpt_logic(user_query, session, intent):
         reply = response_data["choices"][0]["message"]["content"].strip()
 
         # 使用 LINE Push API 主動推送結果
-        push_to_line(session, reply)
+        push_to_line(user_id, reply)
     except Exception as e:
         print("❌ GPT 呼叫失敗:", e)
-        push_to_line(session, "抱歉，目前無法處理您的請求，請稍後再試。")
+        push_to_line(user_id, "抱歉，目前無法處理您的請求，請稍後再試。")
 
 def push_to_line(session, reply):
     # 使用 LINE Push API 主動推送結果
