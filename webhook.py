@@ -162,6 +162,13 @@ def webhook():
     if not isinstance(req, dict):
         print(f"❌ 錯誤：req 不是字典，而是 {type(req)}")
         return jsonify({"fulfillmentText": "請求格式錯誤，請確保 Content-Type 為 application/json。"}) 
+    
+    user_id = req.get("originalDetectIntentRequest", {}).get("payload", {}).get("data", {}).get("source")
+
+    if user_id:
+        push_to_line(user_id, "這是從 GPT 主動推播給您的訊息")
+    else:
+        print("❌ 無法取得使用者 ID，推播失敗")
 
     query_result = req.get("queryResult", {})
     user_query = query_result.get("queryText", "")
@@ -694,6 +701,7 @@ def push_to_line(session, reply):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
     }
+
     payload = {
         "to": session,
         "messages": [{"type": "text", "text": reply}]
