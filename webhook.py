@@ -688,10 +688,7 @@ def process_gpt_logic(user_query, user_id, intent, history):
             },
             json={
                 "model": "gpt-4o",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_query}
-                ],
+                "messages": messages,
                 "max_tokens": 400,
                 "temperature": 0.4,
                 "top_p": 1
