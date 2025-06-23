@@ -178,12 +178,12 @@ def webhook():
         .get("userId")
     )
 
-    print(f"🔍 解析取得的 user_id: {user_id}")
+    # print(f"🔍 解析取得的 user_id: {user_id}")
     
-    if user_id:
-        push_to_line(user_id, "這是從 GPT 主動推播給您的訊息")
-    else:
-        print("❌ 無法取得使用者 ID，推播失敗")
+    # if user_id:
+    #     push_to_line(user_id, "這是從 GPT 主動推播給您的訊息")
+    # else:
+    #     print("❌ 無法取得使用者 ID，推播失敗")
 
     query_result = req.get("queryResult", {})
     user_query = query_result.get("queryText", "")
@@ -531,11 +531,7 @@ def webhook():
             session_data["messages"] = []
             session_data["last_seen"] = now
             session_histories[session] = session_data
-
-            reply = {
-                "fulfillmentText": "✅ 對話已重置，請重新輸入您想查詢的規範或問題。",
-            }
-            return jsonify(reply)
+            return jsonify({"fulfillmentText": "✅ 對話已重置，請重新輸入您想查詢的規範或問題。"})
 
         history = session_data["messages"]
 
@@ -622,8 +618,8 @@ def webhook():
         else :
             try:
                 print("💬 使用 GPT 與對話歷史回答規範問題...")
-                reply = {"fulfillmentText": f"🧠 我正在思考中，請稍後幾秒...{user_id}"}
-                Thread(target=process_gpt_logic, args=(user_query, user_id, intent)).start()
+                reply = {"fulfillmentText": f"🧠 我正在思考中，請稍後幾秒..."}
+                Thread(target=process_gpt_logic, args=(user_query, user_id, intent, history)).start()
                 return jsonify(reply)
 
                 # response = client.chat.completions.create(
@@ -671,9 +667,8 @@ def webhook():
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
 
-def process_gpt_logic(user_query, user_id, intent):
+def process_gpt_logic(user_query, user_id, intent, history):
     try:
-        print("💬 使用 GPT 處理問題...")
         system_prompt = """
         你是配管設計專家，具有十年以上工業配管、設備及鋼構設計經驗，熟悉ASME、JIS、API等相關標準與施工規範。
         回答時請保持專業且簡潔明瞭，避免過度冗長。
@@ -683,6 +678,8 @@ def process_gpt_logic(user_query, user_id, intent):
         請在回答中盡量包含標準編號、法規條文或標準圖引用。
         若使用專有名詞，請適當解釋以確保清晰易懂。
         """
+        messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": user_query}]
+
         response = requests.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
@@ -690,7 +687,7 @@ def process_gpt_logic(user_query, user_id, intent):
                 "Content-Type": "application/json"
             },
             json={
-                "model": "gpt-4",
+                "model": "gpt-4o",
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_query}
