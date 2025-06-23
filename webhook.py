@@ -167,7 +167,8 @@ def webhook():
         req.get("originalDetectIntentRequest", {})
         .get("payload", {})
         .get("data", {})
-        .get("source")
+        .get("source", {})  # ← 這裡取出 dict
+        .get("userId")      # ← 再從 dict 中取出 userId 字串
         or
         req.get("originalDetectIntentRequest", {})
         .get("payload", {})
