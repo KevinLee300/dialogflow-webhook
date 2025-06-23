@@ -163,7 +163,19 @@ def webhook():
         print(f"❌ 錯誤：req 不是字典，而是 {type(req)}")
         return jsonify({"fulfillmentText": "請求格式錯誤，請確保 Content-Type 為 application/json。"}) 
     
-    user_id = req.get("originalDetectIntentRequest", {}).get("payload", {}).get("data", {}).get("source")
+    user_id = (
+        req.get("originalDetectIntentRequest", {})
+        .get("payload", {})
+        .get("data", {})
+        .get("source")
+        or
+        req.get("originalDetectIntentRequest", {})
+        .get("payload", {})
+        .get("data", {})
+        .get("events", [{}])[0]
+        .get("source", {})
+        .get("userId")
+    )
 
     print(f"🔍 解析取得的 user_id: {user_id}")
     
