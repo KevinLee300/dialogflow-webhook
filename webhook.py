@@ -609,7 +609,7 @@ def webhook():
         else :
             try:
                 print("💬 使用 GPT 與對話歷史回答規範問題...")
-                reply = {"fulfillmentText": "🧠 我正在思考中，請稍後幾秒..."}
+                reply = {"fulfillmentText": "🧠 我正在思考中，請稍後幾秒...{user_id}"}
                 Thread(target=process_gpt_logic, args=(user_query, user_id, intent)).start()
                 return jsonify(reply)
 
