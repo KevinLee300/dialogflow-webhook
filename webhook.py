@@ -701,9 +701,9 @@ def push_to_line(user_id, reply):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
     }
-
+    USER_ID = "U4b54904317ddd7ddc1fa21e60e9193cd"
     payload = {
-        "to": user_id,
+        "to": USER_ID,
         "messages": [{"type": "text", "text": reply}]
     }
     response = requests.post(line_api_url, headers=headers, json=payload)
