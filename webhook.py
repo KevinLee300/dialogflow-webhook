@@ -95,8 +95,8 @@ def translate_to_english(query):
     return "", [], 0 """
 
 def search_piping_spec(question, spec_data, keywords, threshold=70):
-    if question.startswith("配管共同問題-"):
-        question = question.replace("配管共同問題-", "", 1)
+    if question.startswith("PCQ-"):
+        question = question.replace("PCQ-", "", 1)
     question_cleaned = re.sub(r"\s+", "", question).lower()
 
     matched_summaries = []
