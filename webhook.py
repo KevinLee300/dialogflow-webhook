@@ -164,7 +164,7 @@ def webhook():
         return jsonify({"fulfillmentText": "請求格式錯誤，請確保 Content-Type 為 application/json。"}) 
     
     user_id = req.get("originalDetectIntentRequest", {}).get("payload", {}).get("data", {}).get("source")
-
+    
     if user_id:
         push_to_line(user_id, "這是從 GPT 主動推播給您的訊息")
     else:
@@ -694,7 +694,7 @@ def process_gpt_logic(user_query, user_id, intent):
         print("❌ GPT 呼叫失敗:", e)
         push_to_line(user_id, "抱歉，目前無法處理您的請求，請稍後再試。")
 
-def push_to_line(session, reply):
+def push_to_line(user_id, reply):
     # 使用 LINE Push API 主動推送結果
     line_api_url = "https://api.line.me/v2/bot/message/push"
     headers = {
@@ -703,7 +703,7 @@ def push_to_line(session, reply):
     }
 
     payload = {
-        "to": session,
+        "to": user_id,
         "messages": [{"type": "text", "text": reply}]
     }
     response = requests.post(line_api_url, headers=headers, json=payload)
