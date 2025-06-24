@@ -625,26 +625,19 @@ def webhook():
         # 🔁 處理其他規範問題
         elif context_params.get("await_pipeclass_question"):
             try:
-                print("💬 由 GPT 回答規範內容...")
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_query}
-                    ]+ history,
-                    max_tokens=400,
-                    temperature=0.3,
-                    top_p=1,
-                )
-                reply = response.choices[0].message.content.strip()
-
+                reply = {"fulfillmentText": f"🧠 我正在思考中，請稍後幾秒..."}
+                # 加入額外參數: 例如檔案ID
+                file_id = "file-Rx9uVCDFeBVp5sb7uC9VKU"
+                Thread(target=process_gpt_logic, args=(user_query, user_id, intent, history, file_id)).start()
+                
+                return jsonify(reply)
+            
             except Exception as e:
                 print("❌ GPT 呼叫失敗:", e)
                 reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-            return jsonify({
-                "fulfillmentText": reply
-            })
+                return jsonify({
+                    "fulfillmentText": reply
+                })
         else :
             try:
                 print("💬 使用 GPT 與對話歷史回答規範問題...")
