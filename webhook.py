@@ -419,30 +419,25 @@ def webhook():
 
     elif intent == "詢問管線等級問題回答":
         try:
-            print("💬 由 GPT 回答規範內容...")
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",  # 建議使用 gpt-4 或 gpt-4-turbo
-                messages=[
-                    {"role": "system", "content": "你是配管設計專家，只回答與工程規範、標準圖或施工標準相關的問題，請根據使用者的問題提供清楚簡潔的回答。"},
-                    {"role": "user", "content": user_query}
-                ],
-                max_tokens=400,
-                temperature=0.4,
-                top_p=1
-            )
-            reply = response.choices[0].message.content.strip()
-            return jsonify({
-            "fulfillmentText": reply,
-            "outputContexts": output_context({"await_pipeclass_question": True})
-        })
+            print("💬 啟動 GPT 處理 pipeclass 問題（含PDF）...")
+            reply = {
+            "fulfillmentText": "📄 我正在查閱相關文件，請稍後幾秒...",
+            "outputContexts": output_context({
+                "await_heat_question": True
+            })
+        }
+            # 加入額外參數: 例如檔案ID
+            file_id = "file-7444Bf6J9K4Ggxcyeozp1p"
+            Thread(target=process_gpt_logic, args=(user_query, user_id, intent, history, file_id)).start()
+            
+            return jsonify(reply)
+        
         except Exception as e:
             print("❌ GPT 呼叫失敗:", e)
             reply = "抱歉，目前無法處理您的請求，請稍後再試。"
-
-        return jsonify({
-            "fulfillmentText": reply,
-            "outputContexts": output_context({"await_pipeclass_question": True})
-        })     
+            return jsonify({
+                "fulfillmentText": reply
+            })
    
     elif intent == "設計問題集":
 
@@ -623,17 +618,6 @@ def webhook():
                 return jsonify(reply)
 
                 # response = client.chat.completions.create(
-                #     model="gpt-3.5-turbo",
-                #     messages=[{"role": "system", "content": system_prompt}] + history,
-                #     max_tokens=400,
-                #     temperature=0.4,
-                #     top_p=1,                                
-                #     frequency_penalty=0.1,
-                #     presence_penalty=0,
-                # )
-                # reply = user_reminder + response.choices[0].message.content.strip()
-
-                # response = client.chat.completions.create(
                 #     model="gpt-4o",
                 #     messages=[
                 #         {"role": "system", "content": system_prompt},
@@ -667,19 +651,63 @@ def webhook():
         return generate_spec_reply(user_query, piping_specification, "企業配管共同規範")
 
 
-def process_gpt_logic(user_query, user_id, intent, history):
+# def process_gpt_logic(user_query, user_id, intent, history):
+
+#     try:
+#         system_prompt = """
+#         你是配管設計專家，具有十年以上工業配管、設備及鋼構設計經驗，熟悉ASME、JIS、API等相關標準與施工規範。
+#         回答時請保持專業且簡潔明瞭，避免過度冗長。
+#         回答內容須具體且技術性強，並以正式且禮貌的語氣回覆。
+#         如果問題超出規範範圍，請禮貌告知並建議相關查詢方向。
+#         請避免提供與工程設計無關的資訊。
+#         請在回答中盡量包含標準編號、法規條文或標準圖引用。
+#         若使用專有名詞，請適當解釋以確保清晰易懂。
+#         """
+#         messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": user_query}]
+
+#         response = requests.post(
+#             "https://api.openai.com/v1/chat/completions",
+#             headers={
+#                 "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+#                 "Content-Type": "application/json"
+#             },
+#             json={
+#                 "model": "gpt-4o",
+#                 "messages": messages,
+#                 "max_tokens": 400,
+#                 "temperature": 0.4,
+#                 "top_p": 1
+#             }
+#         )
+#         response_data = response.json()
+#         reply = response_data["choices"][0]["message"]["content"].strip()
+
+#         # 使用 LINE Push API 主動推送結果
+#         push_to_line(user_id, reply)
+#     except Exception as e:
+#         print("❌ GPT 呼叫失敗:", e)
+#         push_to_line(user_id, "抱歉，目前無法處理您的請求，請稍後再試。")
+
+def process_gpt_logic(user_query, user_id, intent, history, file_id=None):
     try:
         system_prompt = """
-        你是配管設計專家，具有十年以上工業配管、設備及鋼構設計經驗，熟悉ASME、JIS、API等相關標準與施工規範。
-        回答時請保持專業且簡潔明瞭，避免過度冗長。
-        回答內容須具體且技術性強，並以正式且禮貌的語氣回覆。
-        如果問題超出規範範圍，請禮貌告知並建議相關查詢方向。
-        請避免提供與工程設計無關的資訊。
-        請在回答中盡量包含標準編號、法規條文或標準圖引用。
-        若使用專有名詞，請適當解釋以確保清晰易懂。
+        你是配管設計專家，熟悉工業配管、設備及鋼構設計，並能根據附件的PDF文件內容進行準確回答。
+        回答要具專業性、簡潔清楚，必要時引用文件條文與標題，並說明參考第幾頁。
+        若資料不在PDF中，請明確告知；若沒有PDF，也請根據經驗或標準規範回答。
         """
-        messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": user_query}]
 
+        # 建立 messages 並加入歷史訊息
+        messages = [{"role": "system", "content": system_prompt}]
+        messages += history  # 對話歷史加進來
+
+        # 建立使用者這一輪訊息
+        user_message = [{"type": "text", "text": user_query}]
+        if file_id:  # 若有檔案 ID 才加入
+            user_message.append({"type": "file", "file": {"file_id": file_id}})
+        
+        messages.append({"role": "user", "content": user_message})
+
+        # 呼叫 GPT-4o API
         response = requests.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
@@ -689,19 +717,20 @@ def process_gpt_logic(user_query, user_id, intent, history):
             json={
                 "model": "gpt-4o",
                 "messages": messages,
-                "max_tokens": 400,
+                "max_tokens": 800,
                 "temperature": 0.4,
                 "top_p": 1
             }
         )
+
+        # 回覆處理
         response_data = response.json()
         reply = response_data["choices"][0]["message"]["content"].strip()
-
-        # 使用 LINE Push API 主動推送結果
         push_to_line(user_id, reply)
+
     except Exception as e:
         print("❌ GPT 呼叫失敗:", e)
-        push_to_line(user_id, "抱歉，目前無法處理您的請求，請稍後再試。")
+        push_to_line(user_id, "抱歉，我目前無法完成此查詢，請稍後再試。")
 
 def push_to_line(user_id, reply):
     # 使用 LINE Push API 主動推送結果
