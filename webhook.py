@@ -360,7 +360,15 @@ def webhook():
                 "await_pipecommon_question": True,                
             })
         })
-
+    
+    elif intent == "啟動詢問管線等級內容":
+        return jsonify({
+            "fulfillmentText": ("(測試中)您可以提問有關配管等級相關問題，請問您想詢問規範內容？例如：A012適用哪些流體?"),
+            "outputContexts": output_context({
+                "await_pipeclass_question": True,                
+            })
+        })
+    
     elif intent == "管支撐規範":
         # 統一取得參數：優先從 query 抽出，否則使用 context 中值
         extracted_data = extract_from_query(user_query)
