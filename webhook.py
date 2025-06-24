@@ -418,8 +418,48 @@ def webhook():
                 })
 
     elif intent == "詢問管線等級問題回答":
+        
+        # 讀取歷史（若超過 SESSION_TIMEOUT 則重置）
+        now = datetime.now()
+        session_data = session_histories.get(session, {"messages": [], "last_seen": now})
+        if now - session_data["last_seen"] > SESSION_TIMEOUT:
+            session_data["messages"] = []
+
+        # ✅ 檢查是否要重設對話
+        if user_query.strip() in ["重新開始", "reset", "重設對話", "重新來"]:
+            session_data["messages"] = []
+            session_data["last_seen"] = now
+            session_histories[session] = session_data
+            return jsonify({"fulfillmentText": "✅ 對話已重置，請重新輸入您想查詢的規範或問題。"})
+
+        history = session_data["messages"]
+
+        # 加入使用者輸入
+        history.append({"role": "user", "content": user_query})
+
+        # 限制歷史長度
+        if len(history) > MAX_HISTORY * 2:
+            history = history[-MAX_HISTORY * 2:]
+
+        # 是否需要提醒
+        user_reminder = ""
+        if len(history) >= MAX_HISTORY * 2:
+            user_reminder = '⚠️ 您的對話已超過 5 輪，為保持效能，請輸入"重設對話"。\n\n'
+
+        session_data["messages"] = history
+        session_data["last_seen"] = now
+        session_histories[session] = session_data
+
+        system_prompt = """
+        你是配管設計專家，具有十年以上工業配管、設備及鋼構設計經驗，熟悉ASME、JIS、API等相關標準與施工規範。
+        回答時請保持專業且簡潔明瞭，避免過度冗長。
+        回答內容須具體且技術性強，並以正式且禮貌的語氣回覆。
+        如果問題超出規範範圍，請禮貌告知並建議相關查詢方向。
+        請避免提供與工程設計無關的資訊。
+        請在回答中盡量包含標準編號、法規條文或標準圖引用。
+        若使用專有名詞，請適當解釋以確保清晰易懂。
+        """
         try:
-            print("💬 使用 GPT 與對話歷史回答規範問題...")
             reply = {"fulfillmentText": f"🧠 我正在思考中，請稍後幾秒..."}
             # 加入額外參數: 例如檔案ID
             file_id = "file-Rx9uVCDFeBVp5sb7uC9VKU"
