@@ -427,7 +427,7 @@ def webhook():
             })
         }
             # 加入額外參數: 例如檔案ID
-            file_id = "file-7444Bf6J9K4Ggxcyeozp1p"
+            file_id = "file-Rx9uVCDFeBVp5sb7uC9VKU"
             Thread(target=process_gpt_logic, args=(user_query, user_id, intent, history, file_id)).start()
             
             return jsonify(reply)
