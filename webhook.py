@@ -419,13 +419,8 @@ def webhook():
 
     elif intent == "詢問管線等級問題回答":
         try:
-            print("💬 啟動 GPT 處理 pipeclass 問題（含PDF）...")
-            reply = {
-            "fulfillmentText": "📄 我正在查閱相關文件，請稍後幾秒...",
-            "outputContexts": output_context({
-                "await_heat_question": True
-            })
-        }
+            print("💬 使用 GPT 與對話歷史回答規範問題...")
+            reply = {"fulfillmentText": f"🧠 我正在思考中，請稍後幾秒..."}
             # 加入額外參數: 例如檔案ID
             file_id = "file-Rx9uVCDFeBVp5sb7uC9VKU"
             Thread(target=process_gpt_logic, args=(user_query, user_id, intent, history, file_id)).start()
