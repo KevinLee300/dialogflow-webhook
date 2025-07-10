@@ -469,8 +469,14 @@ def webhook():
         """
         try:
             reply = {"fulfillmentText": f"🧠 我正在思考中，請稍後幾秒..."}
-            # 加入額外參數: 例如檔案ID
+
+            # 預設使用煉油部 file_id
             file_id = "file-Rx9uVCDFeBVp5sb7uC9VKU"
+
+            # 若開頭為「烯烴」，切換為烯烴專用 file_id
+            if user_query.strip().startswith("烯烴"):
+                file_id = "file-1bizvwrRLzjVXNfwLoctAb"  # 🔁 改成你實際的烯烴 file ID
+
             Thread(target=process_gpt_logic, args=(user_query, user_id, intent, history, file_id)).start()
             
             return jsonify(reply)
@@ -634,8 +640,14 @@ def webhook():
         elif context_params.get("await_pipeclass_question"):
             try:
                 reply = {"fulfillmentText": f"🧠 我正在思考中，請稍後幾秒..."}
-                # 加入額外參數: 例如檔案ID
+
+                # 預設使用煉油部 file_id
                 file_id = "file-Rx9uVCDFeBVp5sb7uC9VKU"
+
+                # 若開頭為「烯烴」，切換為烯烴專用 file_id
+                if user_query.strip().startswith("烯烴"):
+                    file_id = "file-123456"  # 🔁 改成你實際的烯烴 file ID
+
                 Thread(target=process_gpt_logic, args=(user_query, user_id, intent, history, file_id)).start()
                 
                 return jsonify(reply)
