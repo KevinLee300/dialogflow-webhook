@@ -646,7 +646,7 @@ def webhook():
 
                 # 若開頭為「烯烴」，切換為烯烴專用 file_id
                 if user_query.strip().startswith("烯烴"):
-                    file_id = "file-123456"  # 🔁 改成你實際的烯烴 file ID
+                    file_id = "file-1bizvwrRLzjVXNfwLoctAb"  # 🔁 改成你實際的烯烴 file ID
 
                 Thread(target=process_gpt_logic, args=(user_query, user_id, intent, history, file_id)).start()
                 
