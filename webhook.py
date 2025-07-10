@@ -363,7 +363,12 @@ def webhook():
     
     elif intent == "啟動詢問管線等級內容":
         return jsonify({
-            "fulfillmentText": ("(測試中)您可以提問有關配管等級相關問題，請問您想詢問規範內容？例如：A012適用哪些流體?"),
+            "fulfillmentText": (
+                "(測試中)請輸入您想查詢的配管等級問題，例如：\n"
+                "🔹「A012 適用哪些流體？」（煉油部）\n"
+                "🔹「烯烴-A1D 適用哪些流體？」（烯烴部）\n"
+                "📌 烯烴部請加上「烯烴-」前綴，系統將自動辨識並查詢對應資料。"
+            ),
             "outputContexts": output_context({
                 "await_pipeclass_question": True,                
             })
