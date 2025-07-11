@@ -327,7 +327,8 @@ def webhook():
         extracted_data = extract_from_query(user_query)
         user_query = req.get("queryResult", {}).get("queryText", "").upper()
     # 比對：1 個英文字母 + 3 位數字 + 可選的英文字母（如 A012、A144N）
-        match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
+        # match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
+        match = re.search(r"\b([A-Z]{1,2}\d{0,4}[A-Z0-9\-]*)\b", user_query.upper())
         if match:
             grade_code = match.group(1)
             if grade_code in type_links:
@@ -625,7 +626,8 @@ def webhook():
             extracted_data = extract_from_query(user_query)
             user_query = req.get("queryResult", {}).get("queryText", "").upper()
         # 比對：1 個英文字母 + 3 位數字 + 可選的英文字母（如 A012、A144N）
-            match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
+            #match = re.search(r"\b([A-Z]{1,2}\d{2,4}[A-Z]?)\b", user_query.upper())
+            match = re.search(r"\b([A-Z]{1,2}\d{0,4}[A-Z0-9\-]*)\b", user_query.upper())
             if match:
                 grade_code = match.group(1)
                 if grade_code in type_links:
