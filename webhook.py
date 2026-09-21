@@ -155,7 +155,11 @@ def extract_from_query(text):
 
     return found
        # 讀取 context 中的參數
-
+# Render 保活 / 健康檢查
+@app.route("/ping", methods=["GET"])
+def ping():
+    return "OK", 200
+    
 @app.route("/webhook", methods=["POST"])
 def webhook():
     req = request.get_json()
