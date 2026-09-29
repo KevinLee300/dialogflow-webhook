@@ -61,7 +61,7 @@ except FileNotFoundError:
 #問題中文轉英文
 def translate_to_english(query):
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "請將下面的中文工程問題翻譯為簡潔精確的英文，供資料比對使用。"},
             {"role": "user", "content": query}
@@ -244,7 +244,7 @@ def webhook():
             try:
                 print("🔍 呼叫 GPT 回答...")
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o-mini",
                     messages=[
                         {"role": "system", "content": "你是配管設計專家，只回答與配管規範相關的問題。"},
                         {"role": "user", "content": user_query}
@@ -282,7 +282,7 @@ def webhook():
                     try:
                         print("📄 內容超過 300 字，呼叫 GPT 生成摘要中...")
                         response = client.chat.completions.create(
-                            model="gpt-3.5-turbo",
+                            model="gpt-4o-mini",
                             messages=[
                                 {"role": "system", "content": "你是配管設計專家，請將以下配管規範內容進行條列式重點整理，保留原意並清楚簡明。"},
                                 {"role": "user", "content": content}
@@ -548,7 +548,7 @@ def webhook():
             try:
                 print("💬 使用 GPT 與對話歷史回答規範問題...")
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o-mini",
                     messages=[{"role": "system", "content": system_prompt}] + history,
                     max_tokens=400,
                     temperature=0.4,
@@ -677,7 +677,7 @@ def webhook():
                 return jsonify(reply)
 
                 # response = client.chat.completions.create(
-                #     model="gpt-4o",
+                #     model="gpt-4o-mini",
                 #     messages=[
                 #         {"role": "system", "content": system_prompt},
                 #         {
@@ -731,7 +731,7 @@ def webhook():
 #                 "Content-Type": "application/json"
 #             },
 #             json={
-#                 "model": "gpt-4o",
+#                 "model": "gpt-4o-mini",
 #                 "messages": messages,
 #                 "max_tokens": 400,
 #                 "temperature": 0.4,
@@ -772,7 +772,7 @@ def process_gpt_logic(user_query, user_id, intent, history, file_id=None):
         
         messages.append({"role": "user", "content": user_message})
 
-        # 呼叫 GPT-4o API
+        # 呼叫 GPT-4o mini API
         response = requests.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
@@ -780,7 +780,7 @@ def process_gpt_logic(user_query, user_id, intent, history, file_id=None):
                 "Content-Type": "application/json"
             },
             json={
-                "model": "gpt-4o",
+                "model": "gpt-4o-mini",
                 "messages": messages,
                 "max_tokens": 800,
                 "temperature": 0.4,
